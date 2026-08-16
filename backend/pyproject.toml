@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dealguard-backend"
+version = "1.0.0"
+description = "DealGuard AI - Institutional M&A Diligence, Risk & Valuation Platform"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "DealGuard AI Core Team" }
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = [
+    "../tests/backend",
+]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N"]
+ignore = ["B008"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
