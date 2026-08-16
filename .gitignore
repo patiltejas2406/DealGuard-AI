@@ -33,4 +33,5 @@ coverage/
 htmlcov/
 
 # Logs
-*.log
+*.log*.tsbuildinfo
+data/vault/

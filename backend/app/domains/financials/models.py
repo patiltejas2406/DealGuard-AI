@@ -1,15 +1,16 @@
-"""Financial Statements, Periods & Normalized Metrics Models."""
+"""Financial Statements, Quality of Earnings (QoE) & Normalized Metrics Models."""
 
 import uuid
 from datetime import date
 from typing import TYPE_CHECKING, List, Optional
-from sqlalchemy import Boolean, Date, Float, ForeignKey, Index, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.domains.common.models import TenantScopedModel
 from app.domains.common.types import CompatibleJSON
 
 if TYPE_CHECKING:
+    from app.domains.auth.models import User
     from app.domains.deals.models import Deal
     from app.domains.documents.models import Citation, Document
 
@@ -80,4 +81,38 @@ class FinancialMetric(TenantScopedModel):
 
     __table_args__ = (
         Index("ix_fin_metrics_deal_metric", "deal_id", "metric_name", "period"),
+    )
+
+
+class QoEAdjustment(TenantScopedModel):
+    """Quality of Earnings (QoE) adjustment line item for EBITDA normalization bridge."""
+    __tablename__ = "qoe_adjustments"
+
+    deal_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deals.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    category: Mapped[str] = mapped_column(String(50), nullable=False)  # ONE_TIME_EXPENSE, ONE_TIME_INCOME, LEGAL_NON_RECURRING, RESTRUCTURING, OWNER_PERSONAL, PRO_FORMA, OTHER
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), default="USD", nullable=False)
+    period: Mapped[str] = mapped_column(String(20), default="FY2023", nullable=False)
+    treatment: Mapped[str] = mapped_column(String(20), default="ADD_BACK", nullable=False)  # ADD_BACK, DEDUCTION
+    status: Mapped[str] = mapped_column(String(20), default="PROPOSED", nullable=False)  # PROPOSED, APPROVED, REJECTED
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    citation_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("citations.id", ondelete="SET NULL"), nullable=True
+    )
+    created_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    # Relationships
+    deal: Mapped["Deal"] = relationship("Deal")
+    citation: Mapped[Optional["Citation"]] = relationship("Citation")
+    created_by: Mapped[Optional["User"]] = relationship("User")
+
+    __table_args__ = (
+        Index("ix_qoe_deal_period", "deal_id", "period"),
+        Index("ix_qoe_org_status", "organization_id", "status"),
     )

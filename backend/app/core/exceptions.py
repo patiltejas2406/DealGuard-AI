@@ -101,6 +101,19 @@ class PromptInjectionException(DealGuardException):
         )
 
 
+class AIProcessingException(DealGuardException):
+    """Failure during AI embedding, LLM invocation, or RAG pipeline."""
+
+    def __init__(self, message: str = "An error occurred during AI processing or embedding generation.", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            code="AI_PROCESSING_ERROR",
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            details=details,
+        )
+
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Register uniform JSON error response handlers across the application."""
 

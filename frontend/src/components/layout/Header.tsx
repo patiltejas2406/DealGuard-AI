@@ -29,17 +29,36 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b border-surface-border bg-surface/95 px-6 backdrop-blur">
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded bg-primary-600/20 text-primary-500 ring-1 ring-primary-500/30">
-          <ShieldCheck className="h-5 w-5" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold tracking-tight text-white">DEALGUARD AI</span>
-            <Badge variant="success" size="sm">Phase 3 RBAC</Badge>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold tracking-tight text-white font-mono">DEALGUARD AI</span>
+              <Badge variant="success" size="sm">Phase 5</Badge>
+            </div>
           </div>
         </div>
+
+        {/* Top Nav Links */}
+        <nav className="hidden md:flex items-center gap-1 pl-4 border-l border-slate-800 text-xs font-mono">
+          <a
+            href="/"
+            className="px-3 py-1 rounded-md text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+          >
+            Data Room
+          </a>
+          <a
+            href="/financials"
+            className="px-3 py-1 rounded-md text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+          >
+            3-Statements & QoE
+          </a>
+        </nav>
       </div>
+
 
       <div className="flex items-center gap-4 text-xs">
         <div className="hidden lg:flex items-center gap-1.5 font-mono text-gray-400">

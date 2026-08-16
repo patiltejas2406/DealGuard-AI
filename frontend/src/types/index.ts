@@ -62,6 +62,57 @@ export interface Deal {
   created_at: string;
 }
 
+export interface DocumentItem {
+  id: string;
+  deal_id: string;
+  name: string;
+  file_type: string;
+  mime_type: string;
+  size_bytes: number;
+  sha256_hash: string;
+  status: 'UPLOADED' | 'QUEUED' | 'PROCESSING' | 'INDEXED' | 'FAILED';
+  doc_category?: string;
+  created_at: string;
+}
+
+export interface DocumentChunkItem {
+  id: string;
+  document_id: string;
+  chunk_index: number;
+  page_number: number;
+  section_title?: string;
+
+  content: string;
+  token_count?: number;
+  embedding_model: string;
+  metadata_json?: Record<string, any>;
+}
+
+export interface JobExecutionItem {
+  id: string;
+  organization_id: string;
+  deal_id?: string;
+  job_type: string;
+  status: 'QUEUED' | 'EXTRACTING' | 'CHUNKING' | 'EMBEDDING' | 'INDEXING' | 'COMPLETED' | 'FAILED';
+  progress_pct: number;
+  error_message?: string;
+  result_metadata?: Record<string, any>;
+  started_at?: string;
+  completed_at?: string;
+}
+
+export interface SemanticSearchResult {
+  chunk_id: string;
+  document_id: string;
+  document_name: string;
+  page_number: number;
+  section_title?: string;
+  content: string;
+  similarity_score: number;
+  metadata?: Record<string, any>;
+}
+
+
 export interface Citation {
   id: string;
   documentId: string;
@@ -84,15 +135,95 @@ export interface RiskItem {
   mitigationStrategy?: string;
 }
 
-export interface FinancialMetric {
-  metricName: string;
+export interface FinancialStatementItem {
+  id: string;
+  deal_id: string;
+  statement_type: 'INCOME_STATEMENT' | 'BALANCE_SHEET' | 'CASH_FLOW';
+  period_type: string;
+  fiscal_year: number;
+  fiscal_period: string;
+  source_currency: string;
+  is_audited: boolean;
+  is_normalized: boolean;
+  source_document_id?: string;
+  line_items: Record<string, any>;
+  created_at: string;
+}
+
+export interface FinancialMetricItem {
+  id: string;
+  deal_id: string;
+  metric_name: string;
   period: string;
   value: number;
   unit: string;
-  sourceCurrency: string;
-  isNormalized: boolean;
-  citation?: Citation;
+  source_currency: string;
+  is_normalized: boolean;
+  calculation_formula?: string;
+  citation_id?: string;
 }
+
+export interface QoEAdjustmentItem {
+  id: string;
+  deal_id: string;
+  category: string;
+  description: string;
+  amount: number;
+  currency: string;
+  period: string;
+  treatment: 'ADD_BACK' | 'DEDUCTION';
+  status: 'PROPOSED' | 'APPROVED' | 'REJECTED';
+  notes?: string;
+  citation_id?: string;
+  created_at: string;
+}
+
+export interface QoEBridgeItem {
+  deal_id: string;
+  period: string;
+  bridge: {
+    reported_ebitda: number | null;
+    total_add_backs: number;
+    total_deductions: number;
+    net_adjustment: number;
+    adjusted_ebitda: number | null;
+    adjustment_count: number;
+    applied_adjustments_count: number;
+    category_breakdown: Record<string, number>;
+  };
+  adjustments: QoEAdjustmentItem[];
+}
+
+export interface FinancialValidationCheck {
+  statement_type: string;
+  period: string;
+  check_name: string;
+  passed: boolean;
+  severity: string;
+  message: string;
+}
+
+
+export interface FinancialValidationItem {
+  deal_id: string;
+  status: 'HEALTHY' | 'DISCREPANCIES_FOUND';
+  total_statements_checked: number;
+  checks: FinancialValidationCheck[];
+}
+
+export interface CagrAnalysisItem {
+  start_period?: string;
+  end_period?: string;
+  years?: number;
+  revenue_start?: number;
+  revenue_end?: number;
+  revenue_cagr?: number;
+  ebitda_start?: number;
+  ebitda_end?: number;
+  ebitda_cagr?: number;
+  message?: string;
+}
+
 
 export interface ValuationSummary {
   method: 'DCF' | 'CCA' | 'PRECEDENT';

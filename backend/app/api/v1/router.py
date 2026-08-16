@@ -1,7 +1,7 @@
 """API Version 1 Router Aggregator."""
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, deals, health, organizations, system
+from app.api.v1.endpoints import auth, deals, documents, financials, health, jobs, organizations, system
 
 api_router = APIRouter()
 
@@ -15,5 +15,10 @@ api_router.include_router(auth.router)
 # Domain Endpoints
 api_router.include_router(organizations.router)
 api_router.include_router(deals.router)
+api_router.include_router(documents.router)
+api_router.include_router(jobs.router)
+api_router.include_router(financials.router)
+
+
 
 
