@@ -5,7 +5,10 @@
 import {
   AuthResponse,
   CagrAnalysisItem,
+  ComparableAnalysisItem,
+  ComparableCompanyItem,
   CurrentUserProfile,
+  DcfValuationItem,
   Deal,
   DocumentChunkItem,
   DocumentItem,
@@ -13,12 +16,21 @@ import {
   FinancialStatementItem,
   FinancialValidationItem,
   JobExecutionItem,
+  PrecedentAnalysisItem,
+  PrecedentTransactionItem,
   QoEAdjustmentItem,
   QoEBridgeItem,
   SemanticSearchResult,
+  SensitivityMatrixItem,
   SystemHealth,
   SystemInfo,
+  ValuationAssumptionItem,
+  ValuationItem,
+  ValuationSummaryItem,
+  ValuationValidationItem,
+  WaccAnalysisItem,
 } from '@/types';
+
 
 
 
@@ -233,6 +245,93 @@ export const api = {
 
   getFinancialValidation: (dealId: string) =>
     fetchJson<FinancialValidationItem>(`/deals/${dealId}/financials/validation`),
+
+  // Valuation Intelligence Engine
+  getValuation: (dealId: string) =>
+    fetchJson<ValuationItem>(`/deals/${dealId}/valuation`),
+
+  updateValuation: (dealId: string, valuationId: string, payload: any) =>
+    fetchJson<ValuationItem>(`/deals/${dealId}/valuation/${valuationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  getWaccAnalysis: (dealId: string) =>
+    fetchJson<WaccAnalysisItem>(`/deals/${dealId}/valuation/wacc`),
+
+  calculateWacc: (dealId: string, payload: any) =>
+    fetchJson<WaccAnalysisItem>(`/deals/${dealId}/valuation/wacc/calculate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getValuationAssumptions: (dealId: string) =>
+    fetchJson<ValuationAssumptionItem[]>(`/deals/${dealId}/valuation/assumptions`),
+
+  upsertValuationAssumption: (dealId: string, payload: any) =>
+    fetchJson<ValuationAssumptionItem>(`/deals/${dealId}/valuation/assumptions`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getDcfValuation: (dealId: string, terminalMethod: string = 'PERPETUITY_GROWTH') =>
+    fetchJson<DcfValuationItem>(`/deals/${dealId}/valuation/dcf?terminal_method=${encodeURIComponent(terminalMethod)}`),
+
+  calculateDcf: (dealId: string, payload: any) =>
+    fetchJson<DcfValuationItem>(`/deals/${dealId}/valuation/dcf/calculate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getComparables: (dealId: string) =>
+    fetchJson<ComparableAnalysisItem>(`/deals/${dealId}/valuation/comparables`),
+
+  createComparable: (dealId: string, payload: any) =>
+    fetchJson<ComparableCompanyItem>(`/deals/${dealId}/valuation/comparables`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateComparable: (dealId: string, compId: string, payload: any) =>
+    fetchJson<ComparableCompanyItem>(`/deals/${dealId}/valuation/comparables/${compId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteComparable: (dealId: string, compId: string) =>
+    fetchJson<{ success: boolean; message: string }>(`/deals/${dealId}/valuation/comparables/${compId}`, {
+      method: 'DELETE',
+    }),
+
+  getPrecedents: (dealId: string) =>
+    fetchJson<PrecedentAnalysisItem>(`/deals/${dealId}/valuation/precedents`),
+
+  createPrecedent: (dealId: string, payload: any) =>
+    fetchJson<PrecedentTransactionItem>(`/deals/${dealId}/valuation/precedents`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updatePrecedent: (dealId: string, txId: string, payload: any) =>
+    fetchJson<PrecedentTransactionItem>(`/deals/${dealId}/valuation/precedents/${txId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  deletePrecedent: (dealId: string, txId: string) =>
+    fetchJson<{ success: boolean; message: string }>(`/deals/${dealId}/valuation/precedents/${txId}`, {
+      method: 'DELETE',
+    }),
+
+  getValuationSensitivity: (dealId: string, matrixType: string = 'WACC_VS_GROWTH') =>
+    fetchJson<SensitivityMatrixItem>(`/deals/${dealId}/valuation/sensitivity?matrix_type=${encodeURIComponent(matrixType)}`),
+
+  getValuationSummary: (dealId: string) =>
+    fetchJson<ValuationSummaryItem>(`/deals/${dealId}/valuation/summary`),
+
+  getValuationValidation: (dealId: string) =>
+    fetchJson<ValuationValidationItem>(`/deals/${dealId}/valuation/validation`),
 };
+
 
 

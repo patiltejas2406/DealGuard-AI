@@ -35,3 +35,4 @@ htmlcov/
 # Logs
 *.log*.tsbuildinfo
 data/vault/
+frontend/tsconfig.tsbuildinfo

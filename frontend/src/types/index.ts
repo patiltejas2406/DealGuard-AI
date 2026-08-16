@@ -225,15 +225,220 @@ export interface CagrAnalysisItem {
 }
 
 
-export interface ValuationSummary {
-  method: 'DCF' | 'CCA' | 'PRECEDENT';
-  impliedEvBase: number;
-  impliedEvLow: number;
-  impliedEvHigh: number;
-  wacc?: number;
-  terminalGrowthRate?: number;
-  exitMultiple?: number;
+export interface ValuationItem {
+  id: string;
+  deal_id: string;
+  title: string;
+  status: 'DRAFT' | 'ACTIVE' | 'FINAL' | 'ARCHIVED';
+  selected_method: 'DCF' | 'CCA' | 'PRECEDENT' | 'MULTI_METHOD';
+  currency: string;
+  proposed_ev?: number | null;
+  proposed_equity_value?: number | null;
+  notes?: string;
+  created_at: string;
 }
+
+export interface ValuationAssumptionItem {
+  id: string;
+  deal_id: string;
+  valuation_id?: string;
+  name: string;
+  category: string;
+  value: number;
+  unit: string;
+  period?: string;
+  source_type: 'DOCUMENT' | 'FINANCIAL_MODEL' | 'MARKET_DATA' | 'ANALYST_INPUT' | 'DERIVED';
+  is_analyst_entered: boolean;
+  confidence_score?: number;
+  citation_id?: string;
+  notes?: string;
+}
+
+export interface WaccAnalysisItem {
+  wacc: number | null;
+  cost_of_equity: number | null;
+  after_tax_cost_of_debt: number | null;
+  equity_weight: number | null;
+  debt_weight: number | null;
+  formula?: string;
+  is_calculable: boolean;
+  components?: Record<string, any>;
+}
+
+export interface DcfSchedulePeriod {
+  period: string;
+  year_index: number;
+  revenue?: number | null;
+  revenue_growth?: number | null;
+  ebitda?: number | null;
+  ebitda_margin?: number | null;
+  ebit?: number | null;
+  tax_rate?: number | null;
+  nopat?: number | null;
+  depreciation_amortization?: number | null;
+  capex?: number | null;
+  working_capital_change?: number | null;
+  ufcf?: number | null;
+  discount_factor?: number | null;
+  pv_ufcf?: number | null;
+}
+
+export interface DcfValuationItem {
+  valuation_id: string;
+  deal_id: string;
+  dcf: {
+    terminal_method: string;
+    wacc_pct: number;
+    terminal_growth_rate_pct?: number | null;
+    exit_multiple?: number | null;
+    pv_forecast_fcf: number;
+    terminal_value: number;
+    pv_terminal_value: number;
+    terminal_value_formula?: string;
+    implied_enterprise_value: number;
+    implied_equity_value: number;
+    schedule: DcfSchedulePeriod[];
+    bridge: {
+      enterprise_value: number;
+      cash_and_equivalents: number;
+      total_debt: number;
+      net_debt: number;
+      minority_interest: number;
+      preferred_equity: number;
+      equity_value: number;
+    };
+  };
+}
+
+export interface ComparableCompanyItem {
+  id: string;
+  deal_id: string;
+  valuation_id?: string;
+  company_name: string;
+  ticker?: string;
+  industry?: string;
+  geography?: string;
+  revenue?: number | null;
+  ebitda?: number | null;
+  ebit?: number | null;
+  net_income?: number | null;
+  enterprise_value?: number | null;
+  equity_value?: number | null;
+  ev_to_revenue?: number | null;
+  ev_to_ebitda?: number | null;
+  pe_ratio?: number | null;
+  revenue_growth?: number | null;
+  status: 'INCLUDED' | 'EXCLUDED' | 'REVIEW';
+  source: string;
+  notes?: string;
+  citation_id?: string;
+}
+
+export interface MultipleStatistics {
+  count: number;
+  min: number | null;
+  percentile_25: number | null;
+  median: number | null;
+  mean: number | null;
+  percentile_75: number | null;
+  max: number | null;
+}
+
+export interface ComparableAnalysisItem {
+  valuation_id: string;
+  deal_id: string;
+  companies: ComparableCompanyItem[];
+  statistics: {
+    total_companies: number;
+    included_companies: number;
+    ev_to_revenue_stats: MultipleStatistics;
+    ev_to_ebitda_stats: MultipleStatistics;
+    pe_ratio_stats: MultipleStatistics;
+  };
+  implied_valuation_revenue: Record<string, any>;
+  implied_valuation_ebitda: Record<string, any>;
+}
+
+export interface PrecedentTransactionItem {
+  id: string;
+  deal_id: string;
+  valuation_id?: string;
+  target_name: string;
+  acquirer_name?: string;
+  announcement_date?: string;
+  transaction_value?: number | null;
+  enterprise_value?: number | null;
+  revenue?: number | null;
+  ebitda?: number | null;
+  ev_to_revenue?: number | null;
+  ev_to_ebitda?: number | null;
+  transaction_type: string;
+  industry?: string;
+  geography?: string;
+  status: 'INCLUDED' | 'EXCLUDED' | 'REVIEW';
+  source: string;
+  notes?: string;
+  citation_id?: string;
+}
+
+export interface PrecedentAnalysisItem {
+  valuation_id: string;
+  deal_id: string;
+  transactions: PrecedentTransactionItem[];
+  statistics: {
+    total_transactions: number;
+    included_transactions: number;
+    ev_to_revenue_stats: MultipleStatistics;
+    ev_to_ebitda_stats: MultipleStatistics;
+  };
+  implied_valuation_revenue: Record<string, any>;
+  implied_valuation_ebitda: Record<string, any>;
+}
+
+export interface SensitivityMatrixItem {
+  type: string;
+  row_variable: string;
+  column_variable: string;
+  row_values: number[];
+  column_values: number[];
+  base_row_index: number;
+  base_column_index: number;
+  enterprise_value_matrix: (number | null)[][];
+  equity_value_matrix: (number | null)[][];
+}
+
+export interface MethodologyRangeItem {
+  methodology: string;
+  label: string;
+  ev_low: number | null;
+  ev_base: number | null;
+  ev_high: number | null;
+  equity_low: number | null;
+  equity_base: number | null;
+  equity_high: number | null;
+}
+
+export interface ValuationSummaryItem {
+  valuation_id: string;
+  deal_id: string;
+  currency: string;
+  proposed_ev?: number | null;
+  proposed_equity_value?: number | null;
+  methodologies: MethodologyRangeItem[];
+  transaction_comparison?: Record<string, any>;
+}
+
+export interface ValuationValidationItem {
+  deal_id: string;
+  status: 'HEALTHY' | 'DISCREPANCIES_FOUND';
+  checks: {
+    check_name: string;
+    passed: boolean;
+    severity: string;
+    message: string;
+  }[];
+}
+
 
 export interface SystemHealth {
   status: string;

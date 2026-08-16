@@ -37,7 +37,7 @@ export const Header: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold tracking-tight text-white font-mono">DEALGUARD AI</span>
-              <Badge variant="success" size="sm">Phase 5</Badge>
+              <Badge variant="success" size="sm">Phase 6</Badge>
             </div>
           </div>
         </div>
@@ -56,8 +56,15 @@ export const Header: React.FC = () => {
           >
             3-Statements & QoE
           </a>
+          <a
+            href="/valuation"
+            className="px-3 py-1 rounded-md text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+          >
+            Valuation Intelligence
+          </a>
         </nav>
       </div>
+
 
 
       <div className="flex items-center gap-4 text-xs">

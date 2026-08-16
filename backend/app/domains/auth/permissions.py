@@ -22,6 +22,9 @@ PERM_DOCS_DELETE = "documents:delete"
 PERM_FINANCIALS_READ = "financials:read"
 PERM_FINANCIALS_WRITE = "financials:write"
 
+PERM_VALUATION_READ = "valuation:read"
+PERM_VALUATION_WRITE = "valuation:write"
+
 PERM_RISKS_READ = "risks:read"
 PERM_RISKS_WRITE = "risks:write"
 PERM_RISKS_REVIEW = "risks:review"
@@ -46,6 +49,8 @@ ALL_PERMISSIONS: List[str] = [
     PERM_DOCS_DELETE,
     PERM_FINANCIALS_READ,
     PERM_FINANCIALS_WRITE,
+    PERM_VALUATION_READ,
+    PERM_VALUATION_WRITE,
     PERM_RISKS_READ,
     PERM_RISKS_WRITE,
     PERM_RISKS_REVIEW,
@@ -70,6 +75,8 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
         PERM_DOCS_DELETE,
         PERM_FINANCIALS_READ,
         PERM_FINANCIALS_WRITE,
+        PERM_VALUATION_READ,
+        PERM_VALUATION_WRITE,
         PERM_RISKS_READ,
         PERM_RISKS_WRITE,
         PERM_RISKS_REVIEW,
@@ -90,6 +97,8 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
         PERM_DOCS_DELETE,
         PERM_FINANCIALS_READ,
         PERM_FINANCIALS_WRITE,
+        PERM_VALUATION_READ,
+        PERM_VALUATION_WRITE,
         PERM_RISKS_READ,
         PERM_RISKS_WRITE,
         PERM_RISKS_REVIEW,
@@ -106,6 +115,8 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
         PERM_DOCS_UPLOAD,
         PERM_FINANCIALS_READ,
         PERM_FINANCIALS_WRITE,
+        PERM_VALUATION_READ,
+        PERM_VALUATION_WRITE,
         PERM_RISKS_READ,
         PERM_RISKS_WRITE,
         PERM_ANALYSIS_RUN,
@@ -119,6 +130,8 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
         PERM_DOCS_UPLOAD,
         PERM_FINANCIALS_READ,
         PERM_FINANCIALS_WRITE,
+        PERM_VALUATION_READ,
+        PERM_VALUATION_WRITE,
         PERM_RISKS_READ,
         PERM_RISKS_WRITE,
         PERM_ANALYSIS_RUN,
@@ -128,6 +141,7 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
         PERM_DEALS_READ,
         PERM_DOCS_READ,
         PERM_FINANCIALS_READ,
+        PERM_VALUATION_READ,
         PERM_RISKS_READ,
         PERM_RISKS_REVIEW,
         PERM_AUDIT_READ,
@@ -138,10 +152,12 @@ ROLE_PERMISSIONS: Dict[str, List[str]] = {
         PERM_DEALS_READ,
         PERM_DOCS_READ,
         PERM_FINANCIALS_READ,
+        PERM_VALUATION_READ,
         PERM_RISKS_READ,
         PERM_AUDIT_READ,
     ],
 }
+
 
 
 def resolve_permissions_for_role(role_name: str, custom_permissions: List[str] | None = None) -> Set[str]:

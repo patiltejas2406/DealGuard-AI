@@ -6,6 +6,13 @@ from app.domains.auth.models import Organization, User, Role, OrganizationMember
 from app.domains.deals.models import TargetCompany, Deal, DealMember
 from app.domains.documents.models import Document, DocumentVersion, DocumentChunk, Citation
 from app.domains.financials.models import FinancialStatement, FinancialMetric, QoEAdjustment
+from app.domains.valuation.models import (
+    Valuation,
+    ValuationAssumption,
+    ComparableCompany,
+    PrecedentTransaction,
+    ValuationOutput,
+)
 from app.domains.risk.models import Risk, RiskEvidence
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.jobs.models import JobExecution
@@ -29,11 +36,17 @@ __all__ = [
     "FinancialStatement",
     "FinancialMetric",
     "QoEAdjustment",
+    "Valuation",
+    "ValuationAssumption",
+    "ComparableCompany",
+    "PrecedentTransaction",
+    "ValuationOutput",
     "Risk",
     "RiskEvidence",
     "AuditEvent",
     "HumanReview",
     "JobExecution",
 ]
+
 
 
