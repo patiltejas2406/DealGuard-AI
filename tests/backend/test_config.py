@@ -40,3 +40,17 @@ def test_connection_url_generators():
     assert "postgresql+asyncpg://testuser:testpassword@db.example.com:5432/testdb" in s.get_database_url()
     assert "redis://redis.example.com:6379/0" in s.get_celery_broker_url()
 
+
+def test_cloud_database_and_redis_url_normalization():
+    """Verify cloud-provided postgres:// and postgresql:// are safely normalized."""
+    s_railway = Settings(
+        DATABASE_URL="postgres://user:pass@containers-us-west-1.railway.app:7045/railway",
+        DATABASE_URL_SYNC=None,
+        REDIS_URL="redis://default:secret@redis-service.railway.app:6379",
+    )
+    assert s_railway.get_database_url() == "postgresql+asyncpg://user:pass@containers-us-west-1.railway.app:7045/railway"
+    assert s_railway.get_database_url_sync() == "postgresql://user:pass@containers-us-west-1.railway.app:7045/railway"
+    assert s_railway.get_celery_broker_url() == "redis://default:secret@redis-service.railway.app:6379/0"
+    assert s_railway.get_celery_result_backend() == "redis://default:secret@redis-service.railway.app:6379/1"
+
+

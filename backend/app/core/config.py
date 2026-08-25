@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: Optional[str] = None
+    REDIS_URL: Optional[str] = None
     CELERY_BROKER_URL: Optional[str] = None
     CELERY_RESULT_BACKEND: Optional[str] = None
 
@@ -78,30 +79,67 @@ class Settings(BaseSettings):
         return ["http://localhost:3000"]
 
     def get_database_url(self) -> str:
+        """Return async database connection URL, normalizing postgres/postgresql schemes to postgresql+asyncpg."""
         if self.DATABASE_URL:
-            return self.DATABASE_URL
+            raw_url = self.DATABASE_URL
+            if raw_url.startswith("sqlite"):
+                return raw_url
+            if raw_url.startswith("postgres://"):
+                return raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+            if raw_url.startswith("postgresql://"):
+                return raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return raw_url
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
     def get_database_url_sync(self) -> str:
+        """Return sync database connection URL for Alembic migrations and synchronous drivers."""
         if self.DATABASE_URL_SYNC:
-            return self.DATABASE_URL_SYNC
+            raw_url = self.DATABASE_URL_SYNC
+            if raw_url.startswith("postgres://"):
+                return raw_url.replace("postgres://", "postgresql://", 1)
+            if raw_url.startswith("postgresql+asyncpg://"):
+                return raw_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+            return raw_url
+        if self.DATABASE_URL:
+            raw_url = self.DATABASE_URL
+            if raw_url.startswith("sqlite"):
+                return raw_url.replace("sqlite+aiosqlite://", "sqlite://", 1)
+            if raw_url.startswith("postgres://"):
+                return raw_url.replace("postgres://", "postgresql://", 1)
+            if raw_url.startswith("postgresql+asyncpg://"):
+                return raw_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+            return raw_url
         return (
             f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
     def get_celery_broker_url(self) -> str:
+        """Return Celery broker connection string, prioritizing CELERY_BROKER_URL or REDIS_URL."""
         if self.CELERY_BROKER_URL:
             return self.CELERY_BROKER_URL
+        if self.REDIS_URL:
+            url = self.REDIS_URL.rstrip("/")
+            parts = url.split("://", 1)
+            if len(parts) == 2 and "/" not in parts[1]:
+                return f"{url}/0"
+            return url
         pwd = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{pwd}{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
     def get_celery_result_backend(self) -> str:
+        """Return Celery result backend connection string, prioritizing CELERY_RESULT_BACKEND or REDIS_URL."""
         if self.CELERY_RESULT_BACKEND:
             return self.CELERY_RESULT_BACKEND
+        if self.REDIS_URL:
+            url = self.REDIS_URL.rstrip("/")
+            parts = url.split("://", 1)
+            if len(parts) == 2 and "/" not in parts[1]:
+                return f"{url}/1"
+            return url
         pwd = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{pwd}{self.REDIS_HOST}:{self.REDIS_PORT}/1"
 

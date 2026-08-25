@@ -336,7 +336,7 @@ export default function HomePage() {
                         <span className="text-sky-400">Score: {(res.similarity_score * 100).toFixed(1)}%</span>
                       </div>
                       <p className="text-slate-300 italic text-[11px] leading-relaxed">
-                        "{res.content.slice(0, 180)}..."
+                        &ldquo;{res.content.slice(0, 180)}...&rdquo;
                       </p>
                     </div>
                   ))}
