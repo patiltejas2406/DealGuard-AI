@@ -16,6 +16,7 @@ from app.api.v1.endpoints import (
     scenarios,
     synergies,
     system,
+    technology,
     valuation,
 )
 
@@ -41,6 +42,7 @@ api_router.include_router(scenarios.router)
 api_router.include_router(synergies.router)
 api_router.include_router(integration.router)
 api_router.include_router(legal.router)
+api_router.include_router(technology.router)
 
 
 

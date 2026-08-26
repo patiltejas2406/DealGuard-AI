@@ -30,6 +30,11 @@ from app.domains.legal.models import (
     LegalFinding,
     ComplianceRequirement,
 )
+from app.domains.technology.models import (
+    TechnologyFinding,
+    OperationalMetric,
+    TechnologyDependency,
+)
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.jobs.models import JobExecution
 
@@ -73,6 +78,9 @@ __all__ = [
     "ContractClause",
     "LegalFinding",
     "ComplianceRequirement",
+    "TechnologyFinding",
+    "OperationalMetric",
+    "TechnologyDependency",
     "AuditEvent",
     "HumanReview",
     "JobExecution",

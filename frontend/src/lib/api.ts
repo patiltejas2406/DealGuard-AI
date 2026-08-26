@@ -641,6 +641,49 @@ export const api = {
 
   getLegalSummary: (dealId: string) =>
     fetchJson<any>(`/deals/${dealId}/legal/summary`),
+
+  // ==========================================
+  // Phase 13: Technology & Operational APIs
+  // ==========================================
+  getTechnologyOverview: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/technology`),
+
+  scanTechnologyDocuments: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/technology/scan`, {
+      method: 'POST',
+    }),
+
+  getTechnologyFindings: (dealId: string, category?: string, severity?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (severity) params.append('severity', severity);
+    const qs = params.toString();
+    return fetchJson<any[]>(`/deals/${dealId}/technology/findings${qs ? `?${qs}` : ''}`);
+  },
+
+  createTechnologyFinding: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/technology/findings`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateTechnologyFindingStatus: (dealId: string, findingId: string, payload: { status: string; notes?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/technology/findings/${findingId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  getInfrastructureMetrics: (dealId: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/technology/infrastructure`),
+
+  getTechnologyDependencies: (dealId: string, criticality?: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/technology/dependencies${criticality ? `?criticality=${criticality}` : ''}`),
+
+  getReliabilityMetrics: (dealId: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/technology/reliability`),
+
+  getTechnologySummary: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/technology/summary`),
 };
 
 

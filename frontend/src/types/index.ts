@@ -837,6 +837,99 @@ export interface LegalScanResponse {
   message: string;
 }
 
+// ==========================================
+// Phase 13: Technology & Operational Types
+// ==========================================
+
+export interface TechnologyFindingResponse {
+  id: string;
+  deal_id: string;
+  company_id?: string;
+  document_id?: string;
+  category: string;
+  title: string;
+  technical_fact: string;
+  business_impact?: string;
+  recommendation?: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  likelihood: 'HIGH' | 'MEDIUM' | 'LOW';
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  monetary_exposure: number;
+  status: 'IDENTIFIED' | 'REQUIRES_REVIEW' | 'REMEDIATION_PLANNED' | 'MITIGATED' | 'ACCEPTED';
+  linked_risk_id?: string;
+  linked_workstream_id?: string;
+  linked_milestone_id?: string;
+  citation_id?: string;
+  fingerprint: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OperationalMetricResponse {
+  id: string;
+  deal_id: string;
+  company_id?: string;
+  metric_category: string;
+  metric_name: string;
+  observed_value: number;
+  target_value?: number;
+  unit: string;
+  deviation?: number;
+  status: 'ON_TARGET' | 'DEVIATION' | 'CRITICAL_BREACH';
+  evidence_summary?: string;
+  citation_id?: string;
+  fingerprint: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TechnologyDependencyResponse {
+  id: string;
+  deal_id: string;
+  dependency_name: string;
+  dependency_type: string;
+  provider: string;
+  purpose?: string;
+  criticality: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  failure_impact?: string;
+  replacement_difficulty: 'HIGH' | 'MEDIUM' | 'LOW';
+  is_single_point_of_failure: boolean;
+  annual_cost: number;
+  contract_id?: string;
+  citation_id?: string;
+  fingerprint: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TechnologySummaryResponse {
+  deal_id: string;
+  technology_risk_score: number;
+  technology_health_score: number;
+  risk_band: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
+  spof_count: number;
+  annual_cloud_spend: number;
+  monthly_run_rate: number;
+  total_findings_count: number;
+  critical_findings_count: number;
+  high_findings_count: number;
+  medium_findings_count: number;
+  low_findings_count: number;
+  total_dependencies_count: number;
+  critical_dependencies_count: number;
+  average_uptime_pct: number;
+  sla_breaches_count: number;
+  total_monetary_exposure: number;
+}
+
+export interface TechnologyScanResponse {
+  deal_id: string;
+  findings_extracted: number;
+  metrics_recorded: number;
+  dependencies_identified: number;
+  message: string;
+}
+
 export interface FinancialStatementItem {
   id: string;
   deal_id: string;

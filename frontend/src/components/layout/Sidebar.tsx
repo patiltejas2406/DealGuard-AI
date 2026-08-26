@@ -10,6 +10,7 @@ import {
   Sparkles,
   Calendar,
   Scale,
+  Cpu,
   FileText,
   Shield,
   Layers,
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { name: 'Value Creation', icon: Sparkles, href: '/synergies', badge: 'Waterfall' },
   { name: '100-Day Integration', icon: Calendar, href: '/integration', badge: 'Execution' },
   { name: 'Legal & Contracts', icon: Scale, href: '/legal', badge: 'Evidence' },
+  { name: 'Tech & Architecture', icon: Cpu, href: '/technology', badge: 'Architecture' },
   { name: 'Audit & Citations', icon: FileCheck2, href: '#', badge: 'Immutable' },
 ];
 
