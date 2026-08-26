@@ -22,3 +22,17 @@ def test_alembic_migration_offline_and_online():
     import os
     if os.path.exists("test_alembic.db"):
         os.remove("test_alembic.db")
+
+
+def test_alembic_percent_encoded_url_handling():
+    """Verify that Alembic config properly handles database URLs with URL-encoded special characters (e.g., %40)."""
+    alembic_cfg = Config("backend/alembic.ini")
+    test_raw_url = "postgresql://postgres:%40Tejasdealg@db.example.com:5432/postgres"
+    alembic_cfg.set_main_option(
+        "sqlalchemy.url",
+        test_raw_url.replace("%", "%%"),
+    )
+    # Ensure ConfigParser successfully unescapes %% to %
+    assert alembic_cfg.get_main_option("sqlalchemy.url") == test_raw_url
+    section = alembic_cfg.get_section(alembic_cfg.config_ini_section, {})
+    assert section.get("sqlalchemy.url") == test_raw_url

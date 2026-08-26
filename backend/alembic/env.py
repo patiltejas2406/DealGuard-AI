@@ -22,7 +22,10 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Override sqlalchemy.url with dynamic app configuration
-config.set_main_option("sqlalchemy.url", settings.get_database_url_sync())
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.get_database_url_sync().replace("%", "%%"),
+)
 
 
 def run_migrations_offline() -> None:
