@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
     auth,
+    copilot,
     decision,
     deals,
     documents,
@@ -43,6 +44,7 @@ api_router.include_router(synergies.router)
 api_router.include_router(integration.router)
 api_router.include_router(legal.router)
 api_router.include_router(technology.router)
+api_router.include_router(copilot.router)
 
 
 

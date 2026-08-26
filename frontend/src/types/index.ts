@@ -930,6 +930,50 @@ export interface TechnologyScanResponse {
   message: string;
 }
 
+// ==========================================
+// Phase 14: Streaming RAG Copilot Types
+// ==========================================
+
+export interface CopilotCitation {
+  citation_id?: string;
+  document_id?: string;
+  document_name: string;
+  page_number?: number;
+  section_title?: string;
+  quote: string;
+  confidence: string;
+}
+
+export interface CopilotMessageResponse {
+  id: string;
+  deal_id: string;
+  conversation_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  citations: CopilotCitation[];
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT_EVIDENCE';
+  retrieved_domains: string[];
+  metadata_payload: Record<string, any>;
+  created_at: string;
+}
+
+export interface CopilotConversationResponse {
+  id: string;
+  deal_id: string;
+  title: string;
+  messages_count: number;
+  created_at: string;
+  updated_at: string;
+  messages?: CopilotMessageResponse[];
+}
+
+export interface CopilotQueryResponse {
+  deal_id: string;
+  conversation_id: string;
+  user_message: CopilotMessageResponse;
+  assistant_message: CopilotMessageResponse;
+}
+
 export interface FinancialStatementItem {
   id: string;
   deal_id: string;

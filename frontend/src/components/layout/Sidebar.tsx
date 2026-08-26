@@ -11,6 +11,7 @@ import {
   Calendar,
   Scale,
   Cpu,
+  Bot,
   FileText,
   Shield,
   Layers,
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { name: '100-Day Integration', icon: Calendar, href: '/integration', badge: 'Execution' },
   { name: 'Legal & Contracts', icon: Scale, href: '/legal', badge: 'Evidence' },
   { name: 'Tech & Architecture', icon: Cpu, href: '/technology', badge: 'Architecture' },
+  { name: 'AI Deal Copilot', icon: Bot, href: '/copilot', badge: 'Streaming' },
   { name: 'Audit & Citations', icon: FileCheck2, href: '#', badge: 'Immutable' },
 ];
 

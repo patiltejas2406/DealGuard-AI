@@ -684,6 +684,32 @@ export const api = {
 
   getTechnologySummary: (dealId: string) =>
     fetchJson<any>(`/deals/${dealId}/technology/summary`),
+
+  // ==========================================
+  // Phase 14: Streaming RAG Copilot APIs
+  // ==========================================
+  getCopilotConversations: (dealId: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/copilot/conversations`),
+
+  createCopilotConversation: (dealId: string, payload?: { title?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/copilot/conversations`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    }),
+
+  getCopilotConversation: (dealId: string, conversationId: string) =>
+    fetchJson<any>(`/deals/${dealId}/copilot/conversations/${conversationId}`),
+
+  deleteCopilotConversation: (dealId: string, conversationId: string) =>
+    fetchJson<any>(`/deals/${dealId}/copilot/conversations/${conversationId}`, {
+      method: 'DELETE',
+    }),
+
+  queryCopilot: (dealId: string, payload: { conversation_id?: string; message: string }) =>
+    fetchJson<any>(`/deals/${dealId}/copilot/query`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 

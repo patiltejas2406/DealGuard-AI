@@ -35,6 +35,10 @@ from app.domains.technology.models import (
     OperationalMetric,
     TechnologyDependency,
 )
+from app.domains.copilot.models import (
+    CopilotConversation,
+    CopilotMessage,
+)
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.jobs.models import JobExecution
 
@@ -81,6 +85,8 @@ __all__ = [
     "TechnologyFinding",
     "OperationalMetric",
     "TechnologyDependency",
+    "CopilotConversation",
+    "CopilotMessage",
     "AuditEvent",
     "HumanReview",
     "JobExecution",
