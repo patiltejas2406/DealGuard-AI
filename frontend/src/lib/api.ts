@@ -34,7 +34,30 @@ import {
 
 
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+export function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
+    const cleaned = envUrl.trim().replace(/\/+$/, '');
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isRemoteHost = hostname !== 'localhost' && hostname !== '127.0.0.1';
+      if (isRemoteHost && cleaned.includes('localhost')) {
+        return 'https://victorious-charisma-production-9f0c.up.railway.app/api/v1';
+      }
+    }
+    return cleaned;
+  }
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isRemoteHost = hostname !== 'localhost' && hostname !== '127.0.0.1';
+    if (isRemoteHost) {
+      return 'https://victorious-charisma-production-9f0c.up.railway.app/api/v1';
+    }
+  }
+
+  return 'http://localhost:8000/api/v1';
+}
 
 export class ApiError extends Error {
   constructor(
@@ -84,7 +107,8 @@ export const tokenStore = {
 };
 
 async function fetchJson<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   tokenStore.init();
 
@@ -105,6 +129,7 @@ async function fetchJson<T>(endpoint: string, options: RequestInit = {}): Promis
     const res = await fetch(url, {
       ...options,
       headers,
+      credentials: options.credentials || 'include',
     });
 
     if (!res.ok) {
@@ -113,6 +138,8 @@ async function fetchJson<T>(endpoint: string, options: RequestInit = {}): Promis
         const json = await res.json();
         if (json.error) {
           errorData = json.error;
+        } else if (json.detail) {
+          errorData.message = typeof json.detail === 'string' ? json.detail : JSON.stringify(json.detail);
         }
       } catch {
         // Fallback to statusText
@@ -181,10 +208,11 @@ export const api = {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (orgId) headers['X-Organization-ID'] = orgId;
 
-    const res = await fetch(`${API_BASE}/deals/${dealId}/documents/upload`, {
+    const res = await fetch(`${getApiBaseUrl()}/deals/${dealId}/documents/upload`, {
       method: 'POST',
       headers,
       body: formData,
+      credentials: 'include',
     });
 
     if (!res.ok) {

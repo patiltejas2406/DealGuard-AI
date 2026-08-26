@@ -56,9 +56,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         tokenStore.setOrgId(profile.organization.id);
       }
     } catch (err) {
-      tokenStore.setAccessToken(null);
-      setUser(null);
-      setOrganization(null);
+      console.warn('Failed to fetch user profile:', err);
+      if (err instanceof ApiError && err.status === 401) {
+        tokenStore.setAccessToken(null);
+        tokenStore.setOrgId(null);
+        setUser(null);
+        setOrganization(null);
+        setRole(null);
+        setPermissions([]);
+        setAccessibleOrganizations([]);
+      }
     } finally {
       setIsLoading(false);
     }
