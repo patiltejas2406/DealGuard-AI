@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Sliders,
   Sparkles,
+  Calendar,
   FileText,
   Shield,
   Layers,
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { name: 'Decision Intelligence', icon: Shield, href: '/decision', badge: 'Composite' },
   { name: 'What-If Simulator', icon: Sliders, href: '/scenarios', badge: 'Monte Carlo' },
   { name: 'Value Creation', icon: Sparkles, href: '/synergies', badge: 'Waterfall' },
+  { name: '100-Day Integration', icon: Calendar, href: '/integration', badge: 'Execution' },
   { name: 'Audit & Citations', icon: FileCheck2, href: '#', badge: 'Immutable' },
 ];
 

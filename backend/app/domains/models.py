@@ -17,6 +17,13 @@ from app.domains.risk.models import Risk, RiskEvidence
 from app.domains.decision.models import DecisionScore
 from app.domains.simulation.models import Scenario, SimulationRun
 from app.domains.synergy.models import SynergyOpportunity, SynergyRealizationLog
+from app.domains.integration.models import (
+    IntegrationProgram,
+    IntegrationWorkstream,
+    IntegrationMilestone,
+    IntegrationDependency,
+    IntegrationBlocker,
+)
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.jobs.models import JobExecution
 
@@ -51,6 +58,11 @@ __all__ = [
     "SimulationRun",
     "SynergyOpportunity",
     "SynergyRealizationLog",
+    "IntegrationProgram",
+    "IntegrationWorkstream",
+    "IntegrationMilestone",
+    "IntegrationDependency",
+    "IntegrationBlocker",
     "AuditEvent",
     "HumanReview",
     "JobExecution",

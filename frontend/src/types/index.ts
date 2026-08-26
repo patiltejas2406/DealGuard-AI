@@ -515,6 +515,178 @@ export interface RealizationScheduleResponse {
   total_5yr_net_cash_flow_impact: number;
 }
 
+// ==========================================
+// Phase 11: 100-Day Integration Execution Types
+// ==========================================
+
+export interface IntegrationProgramResponse {
+  id: string;
+  deal_id: string;
+  company_id?: string;
+  organization_id: string;
+  name: string;
+  status: string;
+  close_date?: string;
+  day_0_date?: string;
+  day_100_date?: string;
+  current_day_offset: number;
+  executive_sponsor?: string;
+  objectives?: Record<string, any>;
+  health_score: number;
+  health_band: 'HEALTHY' | 'WATCH' | 'AT_RISK' | 'CRITICAL';
+  total_workstreams: number;
+  total_milestones: number;
+  completed_milestones: number;
+  overdue_milestones: number;
+  open_blockers: number;
+  critical_path_duration_days: number;
+  overall_progress_pct: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkstreamResponse {
+  id: string;
+  deal_id: string;
+  program_id: string;
+  name: string;
+  description?: string;
+  category: string;
+  owner?: string;
+  executive_sponsor?: string;
+  status: 'NOT_STARTED' | 'PLANNED' | 'IN_PROGRESS' | 'AT_RISK' | 'BLOCKED' | 'COMPLETED' | 'CANCELLED';
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  start_day: number;
+  target_day: number;
+  progress_pct: number;
+  risk_level: 'HIGH' | 'MEDIUM' | 'LOW';
+  linked_synergy_ids?: string[];
+  linked_risk_ids?: string[];
+  notes?: string;
+  milestones_count: number;
+  completed_milestones_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MilestoneResponse {
+  id: string;
+  deal_id: string;
+  program_id: string;
+  workstream_id: string;
+  name: string;
+  description?: string;
+  target_day: number;
+  target_date?: string;
+  stage: string;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'AT_RISK' | 'BLOCKED' | 'COMPLETED' | 'OVERDUE';
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  owner?: string;
+  completion_pct: number;
+  is_critical_path: boolean;
+  linked_synergy_id?: string;
+  deliverable?: string;
+  evidence_citation_ids?: string[];
+  notes?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DependencyResponse {
+  id: string;
+  deal_id: string;
+  program_id: string;
+  predecessor_id: string;
+  successor_id: string;
+  dependency_type: string;
+  is_blocking: boolean;
+  created_at: string;
+}
+
+export interface BlockerResponse {
+  id: string;
+  deal_id: string;
+  program_id: string;
+  workstream_id: string;
+  milestone_id?: string;
+  title: string;
+  description?: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  status: 'OPEN' | 'RESOLVED';
+  owner?: string;
+  resolution_notes?: string;
+  resolved_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimelineStageResponse {
+  deal_id: string;
+  current_day_offset: number;
+  stages: Record<string, MilestoneResponse[]>;
+}
+
+export interface CriticalPathResponse {
+  deal_id: string;
+  critical_path_milestone_ids: string[];
+  critical_path_duration_days: number;
+  longest_chain_length: number;
+  critical_milestones: Array<{
+    id: string;
+    name: string;
+    target_day: number;
+    status: string;
+    priority: string;
+  }>;
+}
+
+export interface IntegrationHealthResponse {
+  deal_id: string;
+  health_score: number;
+  health_band: string;
+  penalties: Record<string, number>;
+  metrics: Record<string, any>;
+}
+
+export interface ExecutiveAttentionResponse {
+  deal_id: string;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  total_attention_items: number;
+  critical_items: Array<{
+    source_type: string;
+    id: string;
+    title: string;
+    description: string;
+    workstream_name: string;
+    owner: string;
+    is_critical_path: boolean;
+    action_required: string;
+  }>;
+  high_items: Array<{
+    source_type: string;
+    id: string;
+    title: string;
+    description: string;
+    workstream_name: string;
+    owner: string;
+    is_critical_path: boolean;
+    action_required: string;
+  }>;
+  medium_items: Array<{
+    source_type: string;
+    id: string;
+    title: string;
+    description: string;
+    workstream_name: string;
+    owner: string;
+    is_critical_path: boolean;
+    action_required: string;
+  }>;
+}
+
 export interface FinancialStatementItem {
   id: string;
   deal_id: string;

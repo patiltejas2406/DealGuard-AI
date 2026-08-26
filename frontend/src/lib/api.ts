@@ -504,6 +504,92 @@ export const api = {
 
   getSynergyRealizationSchedule: (dealId: string) =>
     fetchJson<any>(`/deals/${dealId}/synergies/realization`),
+
+  // ==========================================
+  // Phase 11: 100-Day Integration Execution APIs
+  // ==========================================
+  getIntegrationProgram: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/integration`),
+
+  createIntegrationProgram: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/integration`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateIntegrationProgram: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/integration`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  getWorkstreams: (dealId: string, category?: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/integration/workstreams${category ? `?category=${category}` : ''}`),
+
+  createWorkstream: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/integration/workstreams`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateWorkstreamStatus: (dealId: string, workstreamId: string, payload: { status: string; notes?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/integration/workstreams/${workstreamId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  getMilestones: (dealId: string, workstreamId?: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/integration/milestones${workstreamId ? `?workstream_id=${workstreamId}` : ''}`),
+
+  createMilestone: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/integration/milestones`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateMilestoneStatus: (dealId: string, milestoneId: string, payload: { status: string; completion_pct?: number; notes?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/integration/milestones/${milestoneId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  createDependency: (dealId: string, payload: { predecessor_id: string; successor_id: string; dependency_type?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/integration/dependencies`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteDependency: (dealId: string, dependencyId: string) =>
+    fetchJson<void>(`/deals/${dealId}/integration/dependencies/${dependencyId}`, {
+      method: 'DELETE',
+    }),
+
+  getBlockers: (dealId: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/integration/blockers`),
+
+  reportBlocker: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/integration/blockers`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  resolveBlocker: (dealId: string, blockerId: string, payload: { resolution_notes: string }) =>
+    fetchJson<any>(`/deals/${dealId}/integration/blockers/${blockerId}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  getTimeline: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/integration/timeline`),
+
+  getCriticalPath: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/integration/critical-path`),
+
+  getIntegrationHealth: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/integration/health`),
+
+  getExecutiveAttention: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/integration/executive-attention`),
 };
 
 
