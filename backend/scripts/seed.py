@@ -8,11 +8,12 @@ from datetime import date, datetime, timezone
 
 # Add backend directory to sys.path so app modules are importable from anywhere
 current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.abspath(os.path.join(current_dir, "..", "backend"))
-if os.path.isdir(backend_dir) and backend_dir not in sys.path:
+backend_dir = os.path.abspath(os.path.join(current_dir, ".."))
+if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+root_backend_dir = os.path.abspath(os.path.join(current_dir, "..", "backend"))
+if os.path.isdir(root_backend_dir) and root_backend_dir not in sys.path:
+    sys.path.insert(0, root_backend_dir)
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -316,7 +317,7 @@ async def seed_database() -> None:
             action="SYSTEM_SEEDED",
             entity_type="Deal",
             entity_id=deal_apex.id,
-            details={"source": "scripts/seed.py", "synthetic_profile": "ApexCloud, TitanPrecision, MedVance"},
+            details={"source": "backend/scripts/seed.py", "synthetic_profile": "ApexCloud, TitanPrecision, MedVance"},
         ))
 
         await session.commit()
