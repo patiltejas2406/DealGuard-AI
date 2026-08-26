@@ -423,6 +423,98 @@ export interface MonteCarloResponseItem {
   };
 }
 
+// ==========================================
+// Phase 10: Synergy Realization & Value Creation Types
+// ==========================================
+
+export interface SynergyItem {
+  id: string;
+  deal_id: string;
+  company_id?: string;
+  organization_id: string;
+  name: string;
+  description?: string;
+  synergy_type: 'REVENUE' | 'COST' | 'OPERATIONAL';
+  category: string;
+  status: 'IDENTIFIED' | 'VALIDATED' | 'PLANNED' | 'IN_PROGRESS' | 'PARTIALLY_REALIZED' | 'REALIZED' | 'AT_RISK' | 'ABANDONED';
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  baseline_value: number;
+  target_value: number;
+  potential_annual_value: number;
+  realization_rate_pct: number;
+  probability_pct: number;
+  expected_annual_value: number;
+  one_time_integration_cost: number;
+  realization_curve?: Record<string, number>;
+  evidence_citation_ids?: string[];
+  owner?: string;
+  realized_annual_value: number;
+  value_capture_rate_pct: number;
+  variance: number;
+  notes?: string;
+  created_by_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SynergySummaryResponse {
+  deal_id: string;
+  total_opportunities_count: number;
+  total_potential_annual_value: number;
+  total_expected_annual_value: number;
+  total_realized_annual_value: number;
+  total_one_time_integration_cost: number;
+  net_annual_expected_value: number;
+  overall_value_capture_rate_pct: number;
+  by_type: Record<string, { potential: number; expected: number; realized: number; count: number }>;
+  by_status: Record<string, number>;
+  by_confidence: Record<string, number>;
+}
+
+export interface ValueBridgeResponse {
+  deal_id: string;
+  standalone_ev: number;
+  pv_revenue_synergies: number;
+  pv_cost_synergies: number;
+  total_integration_costs: number;
+  realization_risk_discount: number;
+  synergy_adjusted_ev: number;
+  net_value_created: number;
+  value_creation_pct: number;
+  base_decision_score: number;
+  base_decision_band: string;
+  synergy_adjusted_decision_score: number;
+  synergy_adjusted_decision_band: string;
+  score_delta: number;
+  waterfall_steps: Array<{
+    label: string;
+    amount: number;
+    type: 'BASE' | 'ADDITION' | 'SUBTRACTION' | 'TOTAL';
+  }>;
+}
+
+export interface RealizationScheduleResponse {
+  deal_id: string;
+  schedule: Array<{
+    year: number;
+    period: string;
+    potential_revenue_synergy: number;
+    expected_revenue_synergy: number;
+    realized_revenue_synergy: number;
+    potential_cost_synergy: number;
+    expected_cost_synergy: number;
+    realized_cost_synergy: number;
+    total_potential: number;
+    total_expected: number;
+    total_realized: number;
+    integration_cost: number;
+    ebitda_impact: number;
+    net_cash_flow_impact: number;
+  }>;
+  total_5yr_expected_ebitda_impact: number;
+  total_5yr_net_cash_flow_impact: number;
+}
+
 export interface FinancialStatementItem {
   id: string;
   deal_id: string;

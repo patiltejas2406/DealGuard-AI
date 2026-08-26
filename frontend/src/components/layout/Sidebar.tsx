@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
   { name: 'Risk Intelligence', icon: AlertTriangle, href: '/risks', badge: '17 Pillars' },
   { name: 'Decision Intelligence', icon: Shield, href: '/decision', badge: 'Composite' },
   { name: 'What-If Simulator', icon: Sliders, href: '/scenarios', badge: 'Monte Carlo' },
-  { name: 'Value Creation', icon: Sparkles, href: '#', badge: '100-Day' },
+  { name: 'Value Creation', icon: Sparkles, href: '/synergies', badge: 'Waterfall' },
   { name: 'Audit & Citations', icon: FileCheck2, href: '#', badge: 'Immutable' },
 ];
 

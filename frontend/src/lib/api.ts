@@ -457,6 +457,53 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  // ==========================================
+  // Phase 10: Synergy Realization & Value Creation APIs
+  // ==========================================
+  getSynergies: (dealId: string, synergyType?: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/synergies${synergyType ? `?synergy_type=${synergyType}` : ''}`),
+
+  createSynergy: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/synergies`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getSynergy: (dealId: string, synergyId: string) =>
+    fetchJson<any>(`/deals/${dealId}/synergies/${synergyId}`),
+
+  updateSynergy: (dealId: string, synergyId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/synergies/${synergyId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  updateSynergyStatus: (dealId: string, synergyId: string, payload: { status: string; notes?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/synergies/${synergyId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  logSynergyActual: (dealId: string, synergyId: string, payload: { fiscal_period: string; planned_value: number; actual_value: number; notes?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/synergies/${synergyId}/actual`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteSynergy: (dealId: string, synergyId: string) =>
+    fetchJson<void>(`/deals/${dealId}/synergies/${synergyId}`, {
+      method: 'DELETE',
+    }),
+
+  getSynergySummary: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/synergies/summary`),
+
+  getSynergyValueBridge: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/synergies/value-bridge`),
+
+  getSynergyRealizationSchedule: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/synergies/realization`),
 };
 
 
