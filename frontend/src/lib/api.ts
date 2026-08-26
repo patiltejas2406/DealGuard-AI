@@ -420,6 +420,43 @@ export const api = {
 
   getDecisionScoreHistory: (dealId: string, limit: number = 50) =>
     fetchJson<any>(`/deals/${dealId}/decision-score/history?limit=${limit}`),
+
+  // ==========================================
+  // Phase 9: What-If & Monte Carlo Simulation APIs
+  // ==========================================
+  getScenarios: (dealId: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/scenarios`),
+
+  createScenario: (dealId: string, payload: { name: string; description?: string; scenario_type?: string; assumptions: Record<string, number> }) =>
+    fetchJson<any>(`/deals/${dealId}/scenarios`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getScenario: (dealId: string, scenarioId: string) =>
+    fetchJson<any>(`/deals/${dealId}/scenarios/${scenarioId}`),
+
+  runScenario: (dealId: string, scenarioId: string) =>
+    fetchJson<any>(`/deals/${dealId}/scenarios/${scenarioId}/run`, {
+      method: 'POST',
+    }),
+
+  deleteScenario: (dealId: string, scenarioId: string) =>
+    fetchJson<void>(`/deals/${dealId}/scenarios/${scenarioId}`, {
+      method: 'DELETE',
+    }),
+
+  runSensitivity: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/scenarios/sensitivity`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  runMonteCarlo: (dealId: string, payload: { variable_distributions: Record<string, any>; iterations?: number; random_seed?: number }) =>
+    fetchJson<any>(`/deals/${dealId}/scenarios/monte-carlo`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 

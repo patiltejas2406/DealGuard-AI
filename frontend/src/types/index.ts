@@ -275,6 +275,154 @@ export interface DecisionScoreHistoryResponse {
   history: DecisionScoreHistoryItem[];
 }
 
+// ==========================================
+// Phase 9: Scenario Simulation & Monte Carlo Types
+// ==========================================
+
+export interface ScenarioItem {
+  id: string;
+  deal_id: string;
+  organization_id: string;
+  name: string;
+  description?: string;
+  scenario_type: 'WHAT_IF' | 'DOWNSIDE' | 'UPSIDE' | 'STRESS_TEST' | 'SENSITIVITY';
+  status: string;
+  assumptions: Record<string, number>;
+  results?: {
+    engine_version: string;
+    assumptions_applied: Record<string, number>;
+    base_case: {
+      target_ev: number;
+      revenue: number;
+      ebitda: number;
+      ebitda_margin_pct: number;
+      implied_ev: number;
+      decision_score: number;
+      decision_band: string;
+    };
+    scenario_case: {
+      target_ev: number;
+      revenue: number;
+      ebitda: number;
+      ebitda_margin_pct: number;
+      implied_ev: number;
+      decision_score: number;
+      decision_band: string;
+      components?: Record<string, any>;
+    };
+    deltas: {
+      revenue_delta_abs: number;
+      revenue_delta_pct: number;
+      ebitda_delta_abs: number;
+      ebitda_delta_pct: number;
+      valuation_delta_abs: number;
+      valuation_delta_pct: number;
+      decision_score_delta: number;
+      band_changed: boolean;
+      band_transition: string;
+    };
+    positive_drivers?: Array<{ driver: string; type: string; impact: string }>;
+    negative_drivers?: Array<{ driver: string; type: string; impact: string }>;
+    recommendations?: string[];
+  };
+  created_by_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SensitivityMatrixResponse {
+  type: '1D_SWEEP' | '2D_MATRIX';
+  data: {
+    row_variable?: string;
+    row_steps?: number[];
+    col_variable?: string;
+    col_steps?: number[];
+    matrix_grid?: Array<Array<{
+      row_val: number;
+      col_val: number;
+      implied_ev: number;
+      decision_score: number;
+      decision_band: string;
+    }>>;
+    tipping_points_count?: number;
+    tipping_points?: Array<{
+      implied_ev: number;
+      decision_score: number;
+      issue: string;
+      [key: string]: any;
+    }>;
+    variable_name?: string;
+    steps_count?: number;
+    curve?: Array<{
+      step_value: number;
+      implied_ev: number;
+      decision_score: number;
+      decision_band: string;
+      valuation_delta_pct: number;
+      score_delta: number;
+    }>;
+  };
+}
+
+export interface DistributionConfigItem {
+  distribution_type: 'TRIANGULAR' | 'NORMAL' | 'UNIFORM' | 'LOGNORMAL';
+  min_val?: number;
+  mode_val?: number;
+  max_val?: number;
+  mean?: number;
+  std_dev?: number;
+  sigma?: number;
+}
+
+export interface MonteCarloResponseItem {
+  run_id?: string;
+  deal_id: string;
+  engine_version: string;
+  iterations_requested: number;
+  iterations_completed: number;
+  random_seed?: number;
+  valuation_statistics: {
+    mean: number;
+    median: number;
+    std_dev: number;
+    min: number;
+    max: number;
+    percentiles: {
+      p5: number;
+      p10: number;
+      p25: number;
+      p50: number;
+      p75: number;
+      p90: number;
+      p95: number;
+    };
+    histogram: Array<{ bin_start: number; bin_end: number; count: number }>;
+  };
+  decision_score_statistics: {
+    mean: number;
+    median: number;
+    std_dev: number;
+    min: number;
+    max: number;
+    percentiles: {
+      p5: number;
+      p10: number;
+      p25: number;
+      p50: number;
+      p75: number;
+      p90: number;
+      p95: number;
+    };
+    histogram: Array<{ bin_start: number; bin_end: number; count: number }>;
+  };
+  band_probabilities: Record<string, number>;
+  downside_metrics: {
+    prob_below_target_ev_pct: number;
+    prob_high_risk_pct: number;
+    value_at_risk_95: number;
+  };
+}
+
 export interface FinancialStatementItem {
   id: string;
   deal_id: string;
