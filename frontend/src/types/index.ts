@@ -214,6 +214,67 @@ export interface RiskDetectionResponse {
   risks: RiskItem[];
 }
 
+// ==========================================
+// Phase 8: Decision Score & Explainability Types
+// ==========================================
+
+export interface ScoreComponentDetail {
+  name: string;
+  score: number;
+  weight: number;
+  weighted_contribution: number;
+  status: 'AVAILABLE' | 'PARTIAL' | 'INSUFFICIENT_DATA';
+  confidence: number;
+  raw_inputs: Record<string, any>;
+  explanation: string;
+  drivers: Array<{
+    driver: string;
+    type: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
+    impact: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  }>;
+}
+
+export interface DriverItem {
+  driver: string;
+  type: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
+  impact: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  component?: string;
+}
+
+export interface DecisionScoreResponse {
+  id?: string;
+  deal_id: string;
+  company_id?: string;
+  score_type: string;
+  overall_score: number;
+  decision_band: 'STRONG' | 'FAVORABLE' | 'CAUTION' | 'HIGH_RISK' | 'AVOID';
+  decision_band_description: string;
+  confidence_score: number;
+  scoring_version: string;
+  created_at?: string;
+  components: Record<string, ScoreComponentDetail>;
+  positive_drivers: DriverItem[];
+  negative_drivers: DriverItem[];
+  missing_information: string[];
+  recommendations: string[];
+}
+
+export interface DecisionScoreHistoryItem {
+  id: string;
+  overall_score: number;
+  decision_band: string;
+  confidence_score: number;
+  scoring_version: string;
+  created_at: string;
+  calculated_by_id?: string;
+}
+
+export interface DecisionScoreHistoryResponse {
+  deal_id: string;
+  total_calculations: number;
+  history: DecisionScoreHistoryItem[];
+}
+
 export interface FinancialStatementItem {
   id: string;
   deal_id: string;

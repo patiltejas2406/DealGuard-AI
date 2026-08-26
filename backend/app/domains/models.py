@@ -14,6 +14,7 @@ from app.domains.valuation.models import (
     ValuationOutput,
 )
 from app.domains.risk.models import Risk, RiskEvidence
+from app.domains.decision.models import DecisionScore
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.jobs.models import JobExecution
 
@@ -43,6 +44,7 @@ __all__ = [
     "ValuationOutput",
     "Risk",
     "RiskEvidence",
+    "DecisionScore",
     "AuditEvent",
     "HumanReview",
     "JobExecution",

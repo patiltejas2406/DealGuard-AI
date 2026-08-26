@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
   { name: '3-Statements & QoE', icon: TrendingUp, href: '/financials', badge: 'Deterministic' },
   { name: 'Valuation Lab', icon: Layers, href: '/valuation', badge: 'Multi-Method' },
   { name: 'Risk Intelligence', icon: AlertTriangle, href: '/risks', badge: '17 Pillars' },
+  { name: 'Decision Intelligence', icon: Shield, href: '/decision', badge: 'Composite' },
   { name: 'What-If Simulator', icon: Sliders, href: '#', badge: 'Phase 9' },
   { name: 'Value Creation', icon: Sparkles, href: '#', badge: '100-Day' },
   { name: 'Audit & Citations', icon: FileCheck2, href: '#', badge: 'Immutable' },

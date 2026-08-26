@@ -402,6 +402,24 @@ export const api = {
     fetchJson<void>(`/deals/${dealId}/risks/${riskId}`, {
       method: 'DELETE',
     }),
+
+  // ==========================================
+  // Phase 8: Composite Decision Score APIs
+  // ==========================================
+  getDecisionScore: (dealId: string, forceRecalculate: boolean = false) =>
+    fetchJson<any>(`/deals/${dealId}/decision-score${forceRecalculate ? '?force_recalculate=true' : ''}`),
+
+  calculateDecisionScore: (dealId: string, payload?: { custom_weights?: Record<string, number> }) =>
+    fetchJson<any>(`/deals/${dealId}/decision-score/calculate`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    }),
+
+  getDecisionScoreBreakdown: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/decision-score/breakdown`),
+
+  getDecisionScoreHistory: (dealId: string, limit: number = 50) =>
+    fetchJson<any>(`/deals/${dealId}/decision-score/history?limit=${limit}`),
 };
 
 
