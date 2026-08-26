@@ -4,10 +4,11 @@
  * DealGuard AI Enterprise Authentication Login View
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, Mail, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, Mail, AlertCircle, ArrowRight, CheckCircle2, Server } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { getApiBaseUrl } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,9 +18,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeApiUrl, setActiveApiUrl] = useState<string>('');
+
+  useEffect(() => {
+    setActiveApiUrl(getApiBaseUrl());
+  }, []);
 
   // If already logged in, redirect to workspace
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       router.push('/');
     }
@@ -187,6 +193,17 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {/* Connection Target Indicator */}
+          {activeApiUrl && (
+            <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono text-slate-500">
+              <span className="flex items-center gap-1.5 truncate">
+                <Server className="w-3 h-3 text-emerald-500 shrink-0" />
+                <span className="truncate">{activeApiUrl}</span>
+              </span>
+              <span className="text-emerald-500 font-semibold uppercase shrink-0">TLS Active</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

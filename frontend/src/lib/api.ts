@@ -152,7 +152,12 @@ async function fetchJson<T>(endpoint: string, options: RequestInit = {}): Promis
     if (error instanceof ApiError) {
       throw error;
     }
-    throw new ApiError(500, 'NETWORK_ERROR', (error as Error).message);
+    const rawMsg = (error as Error).message || '';
+    const isNetworkAbort = rawMsg === 'Load failed' || rawMsg.includes('Failed to fetch') || rawMsg.includes('NetworkError');
+    const msg = isNetworkAbort
+      ? `Unable to connect to backend at ${baseUrl}. Please verify internet access and ensure your browser is not blocking cross-origin requests.`
+      : rawMsg || 'An unknown network error occurred.';
+    throw new ApiError(500, 'NETWORK_ERROR', msg);
   }
 }
 
