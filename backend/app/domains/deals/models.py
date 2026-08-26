@@ -17,11 +17,13 @@ if TYPE_CHECKING:
 
 
 class TargetCompany(TenantScopedModel):
-    """Target acquisition entity under diligence."""
+    """Target acquisition entity under diligence or monitored portfolio company."""
     __tablename__ = "target_companies"
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     legal_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    company_type: Mapped[str] = mapped_column(String(50), default="TARGET_ACQUISITION", nullable=False)  # TARGET_ACQUISITION, PORTFOLIO_COMPANY, INTERNAL_UNIT, SUBSIDIARY
+    lifecycle_stage: Mapped[str] = mapped_column(String(50), default="DILIGENCE", nullable=False)  # DILIGENCE, ACQUIRED, INTEGRATING, MONITORED, HISTORICAL
     industry: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     sector: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     headquarters: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -36,6 +38,7 @@ class TargetCompany(TenantScopedModel):
 
     __table_args__ = (
         Index("ix_target_company_org_name", "organization_id", "name"),
+        Index("ix_target_company_type_stage", "organization_id", "company_type", "lifecycle_stage"),
     )
 
 

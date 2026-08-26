@@ -85,3 +85,52 @@ DealGuard AI is built as a **Modular Monolith** designed for high transactional 
 | **ADR-007** | Argon2id Password Hashing & JWT Auth | APPROVED | Memory-hard cryptographic hashing with short-lived access tokens and rotated refresh tokens. |
 | **ADR-008** | First-Class Evidence & Citation System | APPROVED | Full traceability: Document $\rightarrow$ Version $\rightarrow$ Chunk $\rightarrow$ Cell $\rightarrow$ Finding $\rightarrow$ Recommendation. |
 | **ADR-009** | Server-Side Multi-Tenancy & Deal Boundaries | APPROVED | Zero trust client-side: all DB and vector queries enforce `organization_id` & `deal_id`. |
+
+---
+
+## 4. Full-Vision Closed-Loop Intelligence Architecture
+
+DealGuard AI is architected as an end-to-end corporate intelligence and value-creation platform where M&A due diligence serves as the entry wedge into ongoing company optimization:
+
+$$\text{Observe} \longrightarrow \text{Understand} \longrightarrow \text{Predict} \longrightarrow \text{Recommend} \longrightarrow \text{Act} \longrightarrow \text{Measure} \longrightarrow \text{Learn} \longrightarrow \text{Optimize}$$
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        DEALGUARD CLOSED-LOOP LIFECYCLE                                 │
+│                                                                                        │
+│  [1. OBSERVE]     Multi-Source Evidence Ingestion (Virtual Data Room, ERP, CRM, SEC)   │
+│         │                                                                              │
+│         ▼                                                                              │
+│  [2. UNDERSTAND]  Deterministic 3-Statement Modeling, QoE, DCF, Multi-Method Valuation│
+│         │                                                                              │
+│         ▼                                                                              │
+│  [3. PREDICT]     17-Pillar Deal Risk Scoring, Decision Score, What-If Sensitivity     │
+│         │                                                                              │
+│         ▼                                                                              │
+│  [4. RECOMMEND]   Grounded IC Advice, Synergy Capture Schedules, 100-Day Action Plans  │
+│         │                                                                              │
+│         ▼                                                                              │
+│  [5. ACT]         Human-in-the-Loop Review, Milestone Assignment, Execution Tracking   │
+│         │                                                                              │
+│         ▼                                                                              │
+│  [6. MEASURE]     Post-Deal Value Realization, Actual vs. Pro-Forma Variance Tracking │
+│         │                                                                              │
+│         ▼                                                                              │
+│  [7. LEARN]       Closed-Loop Model Lineage & Outcome Provenance (ClosedLoopTrace)     │
+│         │                                                                              │
+│         ▼                                                                              │
+│  [8. OPTIMIZE]    Continuous Company Intelligence & Portfolio Value Compounding        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. Domain Extensibility & Entity Evolution
+
+| Domain Layer | Current Diligence Focus | Post-Acquisition & Long-Term Platform Scope |
+| :--- | :--- | :--- |
+| **Corporate Entities** | `TargetCompany` in `DILIGENCE` stage | Evolves to `PORTFOLIO_COMPANY` / `ACQUIRED` entity for continuous monitoring |
+| **Evidence & Citations** | Diligence PDF/XLSX text chunks | Cross-domain citations from contracts, ERP transactions, and customer metrics |
+| **Decision Lineage** | Investment Committee conviction score | `ClosedLoopDecisionTrace` tracking prediction model version, actions, and delta |
+| **Guardrails** | Pure-Python deterministic valuation | Zero-arithmetic LLM boundary with strict confidence and citation thresholding |
+
