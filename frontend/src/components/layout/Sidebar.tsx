@@ -9,6 +9,7 @@ import {
   Sliders,
   Sparkles,
   Calendar,
+  Scale,
   FileText,
   Shield,
   Layers,
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { name: 'What-If Simulator', icon: Sliders, href: '/scenarios', badge: 'Monte Carlo' },
   { name: 'Value Creation', icon: Sparkles, href: '/synergies', badge: 'Waterfall' },
   { name: '100-Day Integration', icon: Calendar, href: '/integration', badge: 'Execution' },
+  { name: 'Legal & Contracts', icon: Scale, href: '/legal', badge: 'Evidence' },
   { name: 'Audit & Citations', icon: FileCheck2, href: '#', badge: 'Immutable' },
 ];
 

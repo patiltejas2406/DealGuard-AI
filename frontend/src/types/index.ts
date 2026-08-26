@@ -687,6 +687,156 @@ export interface ExecutiveAttentionResponse {
   }>;
 }
 
+// ==========================================
+// Phase 12: Legal, Contract & Compliance Types
+// ==========================================
+
+export interface ContractRecordResponse {
+  id: string;
+  deal_id: string;
+  company_id?: string;
+  document_id?: string;
+  title: string;
+  contract_type: string;
+  counterparty: string;
+  effective_date?: string;
+  expiration_date?: string;
+  auto_renewal: boolean;
+  annual_value: number;
+  currency: string;
+  governing_law?: string;
+  jurisdiction?: string;
+  status: 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'TERMINATED';
+  citation_id?: string;
+  clauses_count: number;
+  findings_count: number;
+  has_change_of_control: boolean;
+  requires_consent: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractClauseResponse {
+  id: string;
+  deal_id: string;
+  contract_id?: string;
+  document_id?: string;
+  category: string;
+  clause_title: string;
+  clause_text: string;
+  normalized_summary?: string;
+  page_number?: number;
+  section_reference?: string;
+  requires_consent: boolean;
+  requires_notice: boolean;
+  notice_period_days?: number;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  citation_id?: string;
+  fingerprint: string;
+  created_at: string;
+}
+
+export interface LegalFindingResponse {
+  id: string;
+  deal_id: string;
+  contract_id?: string;
+  clause_id?: string;
+  finding_type: string;
+  title: string;
+  description?: string;
+  legal_fact: string;
+  business_impact?: string;
+  recommendation?: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'IDENTIFIED' | 'REQUIRES_REVIEW' | 'ACTION_PLANNED' | 'CONSENT_OBTAINED' | 'MITIGATED' | 'ACCEPTED';
+  monetary_exposure: number;
+  currency: string;
+  linked_risk_id?: string;
+  linked_synergy_id?: string;
+  linked_workstream_id?: string;
+  linked_milestone_id?: string;
+  citation_id?: string;
+  fingerprint: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ComplianceRequirementResponse {
+  id: string;
+  deal_id: string;
+  company_id?: string;
+  framework: string;
+  requirement_name: string;
+  description?: string;
+  status: 'EVIDENCE_PRESENT' | 'EVIDENCE_MISSING' | 'POTENTIAL_GAP' | 'REQUIRES_REVIEW' | 'COMPLIANT';
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  evidence_summary?: string;
+  citation_ids?: any[];
+  remediation_action?: string;
+  remediation_deadline?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChangeOfControlItem {
+  contract_id: string;
+  contract_title: string;
+  counterparty: string;
+  contract_type: string;
+  annual_value: number;
+  currency: string;
+  requires_consent: boolean;
+  requires_notice: boolean;
+  notice_period_days?: number;
+  clause_summary: string;
+  severity: string;
+  confidence: string;
+  status: string;
+  citation_id?: string;
+  page_number?: number;
+}
+
+export interface ChangeOfControlConsoleResponse {
+  deal_id: string;
+  total_change_of_control_contracts: number;
+  total_consents_required: number;
+  total_revenue_exposed: number;
+  currency: string;
+  contracts: ChangeOfControlItem[];
+}
+
+export interface LegalSummaryResponse {
+  deal_id: string;
+  total_annual_contract_value: number;
+  revenue_at_risk: number;
+  revenue_at_risk_pct: number;
+  total_contracts_reviewed: number;
+  contracts_at_risk_count: number;
+  change_of_control_contracts_count: number;
+  consents_required_count: number;
+  total_clauses_extracted: number;
+  total_findings_count: number;
+  critical_findings_count: number;
+  high_findings_count: number;
+  medium_findings_count: number;
+  low_findings_count: number;
+  compliance_total_requirements: number;
+  compliance_evidence_present: number;
+  compliance_evidence_missing: number;
+  compliance_potential_gaps: number;
+  confidence_distribution: Record<string, number>;
+}
+
+export interface LegalScanResponse {
+  deal_id: string;
+  contracts_scanned: number;
+  clauses_extracted: number;
+  findings_generated: number;
+  compliance_requirements_checked: number;
+  message: string;
+}
+
 export interface FinancialStatementItem {
   id: string;
   deal_id: string;

@@ -590,6 +590,57 @@ export const api = {
 
   getExecutiveAttention: (dealId: string) =>
     fetchJson<any>(`/deals/${dealId}/integration/executive-attention`),
+
+  // ==========================================
+  // Phase 12: Legal, Contract & Compliance APIs
+  // ==========================================
+  getLegalOverview: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/legal`),
+
+  scanLegalDocuments: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/legal/scan`, {
+      method: 'POST',
+    }),
+
+  getContracts: (dealId: string, contractType?: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/legal/contracts${contractType ? `?contract_type=${contractType}` : ''}`),
+
+  createContract: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/legal/contracts`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getClauses: (dealId: string, category?: string, contractId?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (contractId) params.append('contract_id', contractId);
+    const qs = params.toString();
+    return fetchJson<any[]>(`/deals/${dealId}/legal/clauses${qs ? `?${qs}` : ''}`);
+  },
+
+  getLegalFindings: (dealId: string, findingType?: string, severity?: string) => {
+    const params = new URLSearchParams();
+    if (findingType) params.append('finding_type', findingType);
+    if (severity) params.append('severity', severity);
+    const qs = params.toString();
+    return fetchJson<any[]>(`/deals/${dealId}/legal/findings${qs ? `?${qs}` : ''}`);
+  },
+
+  updateLegalFindingStatus: (dealId: string, findingId: string, payload: { status: string; notes?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/legal/findings/${findingId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  getChangeOfControl: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/legal/change-of-control`),
+
+  getComplianceMatrix: (dealId: string, framework?: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/legal/compliance${framework ? `?framework=${framework}` : ''}`),
+
+  getLegalSummary: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/legal/summary`),
 };
 
 

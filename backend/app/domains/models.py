@@ -24,6 +24,12 @@ from app.domains.integration.models import (
     IntegrationDependency,
     IntegrationBlocker,
 )
+from app.domains.legal.models import (
+    ContractRecord,
+    ContractClause,
+    LegalFinding,
+    ComplianceRequirement,
+)
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.jobs.models import JobExecution
 
@@ -63,6 +69,10 @@ __all__ = [
     "IntegrationMilestone",
     "IntegrationDependency",
     "IntegrationBlocker",
+    "ContractRecord",
+    "ContractClause",
+    "LegalFinding",
+    "ComplianceRequirement",
     "AuditEvent",
     "HumanReview",
     "JobExecution",
