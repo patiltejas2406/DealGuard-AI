@@ -79,7 +79,8 @@ async def test_create_and_list_deals_api(db_session: AsyncSession, async_client:
 
     risks_res = await async_client.get(f"/api/v1/deals/{deal_id}/risks", headers=headers)
     assert risks_res.status_code == 200
-    assert isinstance(risks_res.json(), list)
+    risks_json = risks_res.json()
+    assert "items" in risks_json and isinstance(risks_json["items"], list)
 
     fin_res = await async_client.get(f"/api/v1/deals/{deal_id}/financials", headers=headers)
     assert fin_res.status_code == 200

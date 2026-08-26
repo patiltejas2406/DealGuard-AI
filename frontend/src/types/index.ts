@@ -123,16 +123,95 @@ export interface Citation {
   confidenceScore: number;
 }
 
+export interface CitationDetail {
+  id: string;
+  document_id: string;
+  document_name?: string;
+  page_number: number;
+  section?: string;
+  exact_quote: string;
+  char_offset_start?: number;
+  char_offset_end?: number;
+  confidence_score: number;
+}
+
+export interface RiskEvidenceDetail {
+  id: string;
+  citation_id: string;
+  citation?: CitationDetail;
+  relevance_explanation?: string;
+  weight: number;
+}
+
 export interface RiskItem {
   id: string;
+  organization_id: string;
+  deal_id: string;
+  company_id?: string;
   category: string;
   title: string;
+  description: string;
   severity: RiskSeverity;
   likelihood: RiskLikelihood;
   score: number;
-  status: 'IDENTIFIED' | 'REVIEWED' | 'MITIGATED' | 'ACCEPTED';
-  citation?: Citation;
-  mitigationStrategy?: string;
+  risk_level: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  status: 'IDENTIFIED' | 'REVIEWED' | 'ACCEPTED' | 'MITIGATED' | 'REJECTED';
+  detection_source: 'AI_EXTRACTED' | 'MANUAL_ENTRY' | 'SYSTEM_RULE';
+  confidence_score?: number;
+  mitigation_strategy?: string;
+  recommendation?: string;
+  fingerprint?: string;
+  evidence_items: RiskEvidenceDetail[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RiskListResponse {
+  total: number;
+  items: RiskItem[];
+}
+
+export interface RiskMatrixCell {
+  id: string;
+  title: string;
+  category: string;
+  severity: number;
+  likelihood: number;
+  score: number;
+  risk_level: string;
+  status: string;
+}
+
+export interface RiskMatrixResponse {
+  total_risks: number;
+  average_score: number;
+  level_counts: {
+    LOW: number;
+    MODERATE: number;
+    HIGH: number;
+    CRITICAL: number;
+  };
+  category_counts: Record<string, number>;
+  status_counts: Record<string, number>;
+  matrix_grid: Record<number, Record<number, RiskMatrixCell[]>>;
+}
+
+export interface RiskCategoryInfo {
+  id: string;
+  name: string;
+  description: string;
+  signals: string[];
+  default_mitigation: string;
+  typical_severity_range: string;
+}
+
+export interface RiskDetectionResponse {
+  deal_id: string;
+  scanned_chunks_count: number;
+  detected_count: number;
+  created_count: number;
+  duplicates_skipped: number;
+  risks: RiskItem[];
 }
 
 export interface FinancialStatementItem {

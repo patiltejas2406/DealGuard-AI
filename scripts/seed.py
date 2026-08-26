@@ -220,26 +220,68 @@ async def seed_database() -> None:
             calculation_formula="ebitda / revenue",
         ))
 
-        # Risk for ApexCloud
-        risk_apex = Risk(
+        # Risks for ApexCloud across 17 Pillars
+        risk_apex1 = Risk(
             organization_id=org.id,
             deal_id=deal_apex.id,
+            company_id=target_apex.id,
             category="CUSTOMER_CONCENTRATION",
             title="High Customer Revenue Concentration (Top 3 = 42% ARR)",
             description="Loss of top customer represents an immediate 18% ARR drag ($8.1M ARR).",
             severity=4,
             likelihood=3,
             score=12,
-            status="UNDER_REVIEW",
+            risk_level="HIGH",
+            status="REVIEWED",
+            detection_source="AI_EXTRACTED",
+            confidence_score=0.94,
             mitigation_strategy="Structure deal with 15% earnout tied to 24-month customer retention covenants.",
+            recommendation="Implement structured indemnification escrow and require customer contract consents prior to closing.",
+            fingerprint="seed_apex_cust_conc_01",
         )
-        session.add(risk_apex)
+        risk_apex2 = Risk(
+            organization_id=org.id,
+            deal_id=deal_apex.id,
+            company_id=target_apex.id,
+            category="CYBERSECURITY",
+            title="SOC 2 Type II Exception on Unencrypted Database Backups",
+            description="Recent penetration testing revealed non-compliant backup storage without envelope encryption.",
+            severity=4,
+            likelihood=4,
+            score=16,
+            risk_level="CRITICAL",
+            status="IDENTIFIED",
+            detection_source="AI_EXTRACTED",
+            confidence_score=0.89,
+            mitigation_strategy="Require full KMS key rotation and backup remediation as pre-closing condition precedent.",
+            recommendation="Escalate to technology diligence committee; mandate closing indemnity for data liabilities.",
+            fingerprint="seed_apex_cyber_02",
+        )
+        risk_apex3 = Risk(
+            organization_id=org.id,
+            deal_id=deal_apex.id,
+            company_id=target_apex.id,
+            category="KEY_PERSON",
+            title="Chief AI Architect Single-Point Technical Dependency",
+            description="Core indexing proprietary algorithm developed solely by founding VP Engineering without non-compete.",
+            severity=3,
+            likelihood=3,
+            score=9,
+            risk_level="MODERATE",
+            status="IDENTIFIED",
+            detection_source="MANUAL_ENTRY",
+            confidence_score=1.0,
+            mitigation_strategy="Execute 3-year executive retention agreement with acceleration vesting on target milestones.",
+            recommendation="Issue equity retention pool equal to 4.5% of post-deal fully diluted equity.",
+            fingerprint="seed_apex_key_person_03",
+        )
+        session.add_all([risk_apex1, risk_apex2, risk_apex3])
         await session.flush()
 
         session.add(RiskEvidence(
             organization_id=org.id,
             deal_id=deal_apex.id,
-            risk_id=risk_apex.id,
+            risk_id=risk_apex1.id,
             citation_id=citation_apex.id,
             relevance_explanation="Direct SEC Note 8 disclosure confirms 42% concentration across 3 counterparties.",
         ))

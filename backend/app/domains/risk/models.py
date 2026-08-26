@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.domains.common.models import TenantScopedModel
 
 if TYPE_CHECKING:
-    from app.domains.deals.models import Deal
+    from app.domains.deals.models import Deal, TargetCompany
     from app.domains.documents.models import Citation
 
 
@@ -19,6 +19,9 @@ class Risk(TenantScopedModel):
     deal_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("deals.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    company_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("target_companies.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     category: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
@@ -27,9 +30,16 @@ class Risk(TenantScopedModel):
     severity: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 (Negligible) to 5 (Catastrophic)
     likelihood: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 (Rare) to 5 (Almost Certain)
     score: Mapped[int] = mapped_column(Integer, nullable=False)  # severity * likelihood (1 to 25)
+    risk_level: Mapped[str] = mapped_column(String(20), default="MODERATE", nullable=False)  # LOW, MODERATE, HIGH, CRITICAL
     
-    status: Mapped[str] = mapped_column(String(50), default="IDENTIFIED", nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(50), default="IDENTIFIED", nullable=False, index=True)  # IDENTIFIED, REVIEWED, ACCEPTED, MITIGATED, REJECTED
+    detection_source: Mapped[str] = mapped_column(String(30), default="MANUAL_ENTRY", nullable=False)  # AI_EXTRACTED, MANUAL_ENTRY, SYSTEM_RULE
+    confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    
     mitigation_strategy: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    recommendation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    fingerprint: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    
     owner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
@@ -42,6 +52,9 @@ class Risk(TenantScopedModel):
 
     __table_args__ = (
         Index("ix_risks_org_deal_cat", "organization_id", "deal_id", "category"),
+        Index("ix_risks_deal_level", "deal_id", "risk_level"),
+        Index("ix_risks_deal_fingerprint", "deal_id", "fingerprint"),
+        Index("ix_risks_company", "organization_id", "company_id"),
     )
 
 

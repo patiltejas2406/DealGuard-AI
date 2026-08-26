@@ -121,6 +121,7 @@ class Citation(TenantScopedModel):
     section: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     exact_quote: Mapped[str] = mapped_column(Text, nullable=False)
     char_offset_start: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    char_offset_end: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     extraction_method: Mapped[str] = mapped_column(String(50), default="PARSER_TABLE", nullable=False)
     source_entity_type: Mapped[str] = mapped_column(String(50), default="DOCUMENT", nullable=False)  # DOCUMENT, FINANCIAL_RECORD, CONTRACT_CLAUSE, INTEGRATION_DATA, EXTERNAL_SOURCE
     confidence_score: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)

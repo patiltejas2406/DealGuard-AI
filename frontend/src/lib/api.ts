@@ -331,6 +331,77 @@ export const api = {
 
   getValuationValidation: (dealId: string) =>
     fetchJson<ValuationValidationItem>(`/deals/${dealId}/valuation/validation`),
+
+  // ==========================================
+  // Phase 7: 17-Pillar Risk Intelligence APIs
+  // ==========================================
+  listRisks: (
+    dealId: string,
+    params?: {
+      category?: string;
+      risk_level?: string;
+      status?: string;
+      min_severity?: number;
+      min_likelihood?: number;
+      search?: string;
+      sort_by?: string;
+      sort_desc?: boolean;
+      offset?: number;
+      limit?: number;
+    }
+  ) => {
+    const query = new URLSearchParams();
+    if (params?.category) query.append('category', params.category);
+    if (params?.risk_level) query.append('risk_level', params.risk_level);
+    if (params?.status) query.append('status', params.status);
+    if (params?.min_severity) query.append('min_severity', params.min_severity.toString());
+    if (params?.min_likelihood) query.append('min_likelihood', params.min_likelihood.toString());
+    if (params?.search) query.append('search', params.search);
+    if (params?.sort_by) query.append('sort_by', params.sort_by);
+    if (params?.sort_desc !== undefined) query.append('sort_desc', params.sort_desc.toString());
+    if (params?.offset !== undefined) query.append('offset', params.offset.toString());
+    if (params?.limit !== undefined) query.append('limit', params.limit.toString());
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return fetchJson<{ total: number; items: any[] }>(`/deals/${dealId}/risks${qs}`);
+  },
+
+  getRiskMatrix: (dealId: string) =>
+    fetchJson<any>(`/deals/${dealId}/risks/matrix`),
+
+  getRiskCategories: (dealId: string) =>
+    fetchJson<any[]>(`/deals/${dealId}/risks/categories`),
+
+  createRisk: (dealId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/risks`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  detectRisks: (dealId: string, payload?: { categories?: string[]; min_confidence?: number }) =>
+    fetchJson<any>(`/deals/${dealId}/risks/detect`, {
+      method: 'POST',
+      body: JSON.stringify(payload || { min_confidence: 0.6 }),
+    }),
+
+  getRisk: (dealId: string, riskId: string) =>
+    fetchJson<any>(`/deals/${dealId}/risks/${riskId}`),
+
+  updateRisk: (dealId: string, riskId: string, payload: any) =>
+    fetchJson<any>(`/deals/${dealId}/risks/${riskId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  updateRiskStatus: (dealId: string, riskId: string, payload: { status: string; rationale?: string }) =>
+    fetchJson<any>(`/deals/${dealId}/risks/${riskId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteRisk: (dealId: string, riskId: string) =>
+    fetchJson<void>(`/deals/${dealId}/risks/${riskId}`, {
+      method: 'DELETE',
+    }),
 };
 
 

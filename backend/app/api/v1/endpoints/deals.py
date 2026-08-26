@@ -111,24 +111,6 @@ async def list_deal_documents(
 
 
 @router.get(
-    "/{deal_id}/risks",
-    summary="Get 17-Pillar Deal Risks and Evidence Citations",
-    status_code=status.HTTP_200_OK,
-    response_model=List[RiskResponse],
-)
-async def list_deal_risks(
-    deal_id: uuid.UUID,
-    category: Optional[str] = Query(None, description="Filter by risk category pillar"),
-    db: AsyncSession = Depends(get_db),
-    context: TenantContext = Depends(validate_deal_membership),
-) -> List[RiskResponse]:
-    context.require_permission(PERM_RISKS_READ)
-    service = RiskService(db)
-    risks = await service.list_risks(context, deal_id, category=category)
-    return [RiskResponse.model_validate(r) for r in risks]
-
-
-@router.get(
     "/{deal_id}/financials",
     summary="Get 3-Statement Financials and Metrics for Deal",
     status_code=status.HTTP_200_OK,
