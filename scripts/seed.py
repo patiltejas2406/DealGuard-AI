@@ -24,6 +24,7 @@ from app.domains.documents.models import Citation, Document, DocumentChunk, Docu
 from app.domains.financials.models import FinancialMetric, FinancialStatement
 from app.domains.risk.models import Risk, RiskEvidence
 from app.domains.audit.models import AuditEvent
+import app.domains.models
 
 
 async def seed_database() -> None:
@@ -45,7 +46,7 @@ async def seed_database() -> None:
 
         # 1. Organization
         org = Organization(
-            id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+            id=uuid.uuid4(),
             name="DealGuard Demo Capital",
             slug="dealguard-demo-capital",
             tier="ENTERPRISE",

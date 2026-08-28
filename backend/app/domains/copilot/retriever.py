@@ -95,12 +95,26 @@ class MultiDomainRetriever:
             ).limit(6)
             metrics_res = await self.session.execute(metrics_q)
             f_metrics = list(metrics_res.scalars().all())
-            if f_metrics:
+
+            qoe_q = select(QoEAdjustment).where(
+                QoEAdjustment.deal_id == deal_id,
+                QoEAdjustment.organization_id == organization_id,
+            ).limit(5)
+            qoe_res = await self.session.execute(qoe_q)
+            qoe_adjs = list(qoe_res.scalars().all())
+
+            if f_metrics or qoe_adjs:
                 retrieved_domains.append("FINANCIALS")
-                f_text = "Financial Metrics & Performance:\n" + "\n".join(
-                    [f"- {m.metric_name}: {m.metric_value} (Period: {m.fiscal_year} {m.fiscal_period or ''})" for m in f_metrics]
-                )
-                context_sections.append(f_text)
+                f_parts = []
+                if f_metrics:
+                    f_parts.append("Financial Metrics & Performance:\n" + "\n".join(
+                        [f"- {m.metric_name}: {m.value:,.2f} ({m.unit}, Period: {m.period})" for m in f_metrics]
+                    ))
+                if qoe_adjs:
+                    f_parts.append("Quality of Earnings (QoE) Adjustments:\n" + "\n".join(
+                        [f"- [{adj.category}] {adj.description}: {adj.treatment} ${adj.amount:,.2f} ({adj.status})" for adj in qoe_adjs]
+                    ))
+                context_sections.append("\n\n".join(f_parts))
 
         # 6. Synergies & Value Creation Domain
         if any(w in q_lower for w in ["synergy", "synergies", "value creation", "cost savings", "upsell", "waterfall"]):
