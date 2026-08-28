@@ -80,6 +80,34 @@ class IntegrationIntelligenceAgent(BaseSpecialistAgent):
         blockers_res = await self.session.execute(blockers_q)
         open_blockers = list(blockers_res.scalars().all())
 
+        if not milestones and not open_blockers:
+            return IntegrationAssessment(
+                agent_id=self.agent_id,
+                domain="INTEGRATION",
+                status=AgentStatus.INSUFFICIENT_EVIDENCE,
+                summary="Insufficient integration roadmaps or milestone workplans in the Data Room.",
+                confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
+                confidence_score=0.20,
+                unresolved_issues=["No 100-day integration milestones or operational workstreams logged."],
+                data_gaps=[
+                    "100-day post-merger integration workstream charters (HR, Tech, Sales, Finance)",
+                    "Critical-path milestone dependency DAG and Day 1 readiness checklists",
+                    "Integration execution risk logs and operational blocker registers",
+                ],
+                required_diligence=["Create 100-day post-merger integration plan in Integration Hub."],
+                deterministic_references={
+                    "total_milestones": 0,
+                    "critical_path_milestones": 0,
+                    "open_blockers_count": 0,
+                    "health_score": 0.0,
+                },
+                total_milestones=0,
+                critical_path_milestones_count=0,
+                integration_health_score=0.0,
+                day_100_synergy_readiness_pct=0.0,
+                identified_blockers_count=0,
+            )
+
         critical_path_count = len([m for m in milestones if m.is_critical_path])
         health_score = 88.0 if len(open_blockers) == 0 else (70.0 if len(open_blockers) <= 2 else 55.0)
 
@@ -103,6 +131,7 @@ class IntegrationIntelligenceAgent(BaseSpecialistAgent):
                 category="INTEGRATION_EXECUTION",
                 headline="100-Day Integration Program Health",
                 detailed_reasoning=f"Identified {len(milestones)} program milestones with {len(open_blockers)} active blockers. Overall health score: {health_score:.1f}/100.",
+                finding_type="FACT",
                 severity_level="LOW" if len(open_blockers) == 0 else "MEDIUM",
                 confidence_score=0.92,
                 is_deterministic_calculation=True,
@@ -113,9 +142,11 @@ class IntegrationIntelligenceAgent(BaseSpecialistAgent):
 
         summary = (
             f"Integration planning complete: {len(milestones)} milestones across workstreams. Health Score: {health_score:.1f}/100 with {len(open_blockers)} open blockers."
-            if milestones
-            else "Baseline 100-day integration framework ready for mobilization."
         )
+
+        data_gaps = []
+        if len(milestones) < 5:
+            data_gaps.append("Detailed department-level 30/60/90-day execution milestones.")
 
         return IntegrationAssessment(
             agent_id=self.agent_id,
@@ -128,6 +159,13 @@ class IntegrationIntelligenceAgent(BaseSpecialistAgent):
             positive_drivers=positive_drivers,
             negative_drivers=negative_drivers,
             unresolved_issues=unresolved,
+            data_gaps=data_gaps,
+            metrics={
+                "total_milestones": len(milestones),
+                "critical_path_milestones": critical_path_count,
+                "open_blockers_count": len(open_blockers),
+                "health_score": health_score,
+            },
             required_diligence=["Establish joint Integration Management Office (IMO) charter on Day 1."],
             deterministic_references={
                 "total_milestones": len(milestones),

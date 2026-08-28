@@ -276,13 +276,18 @@ class IntentRouter:
         return CopilotIntent.GENERAL_DEAL_INTELLIGENCE
 
     @classmethod
+    def get_candidate_domains(cls, intent: CopilotIntent) -> List[str]:
+        """Return candidate retrieval domains mapped to the given intent."""
+        return INTENT_DOMAIN_ROUTING.get(
+            intent, INTENT_DOMAIN_ROUTING[CopilotIntent.GENERAL_DEAL_INTELLIGENCE]
+        )
+
+    @classmethod
     def route_query(
         cls, query: str, conversation_history: Optional[List[Dict[str, str]]] = None
     ) -> Tuple[CopilotIntent, CopilotLanguage, List[str]]:
         """Route user query to appropriate intent, language mode, and candidate domain list."""
         intent = cls.classify_intent(query, conversation_history)
         language = cls.detect_language(query)
-        candidate_domains = INTENT_DOMAIN_ROUTING.get(
-            intent, INTENT_DOMAIN_ROUTING[CopilotIntent.GENERAL_DEAL_INTELLIGENCE]
-        )
+        candidate_domains = cls.get_candidate_domains(intent)
         return intent, language, candidate_domains

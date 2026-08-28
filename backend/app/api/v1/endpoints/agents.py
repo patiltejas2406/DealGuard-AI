@@ -220,3 +220,65 @@ async def get_execution_details(
             for a in execution.assessments
         ],
     }
+
+
+@router.post(
+    "/deals/{deal_id}/agents/analyze",
+    summary="Analyze Deal with Specialist Agents",
+    status_code=status.HTTP_200_OK,
+)
+async def analyze_deal_agents(
+    deal_id: uuid.UUID,
+    payload: OrchestrationRunPayload,
+    db: AsyncSession = Depends(get_db),
+    context: TenantContext = Depends(validate_deal_membership),
+) -> Dict[str, Any]:
+    """Execute dynamic specialist agent analysis for a deal."""
+    return await orchestrate_agents(deal_id, payload, db, context)
+
+
+@router.post(
+    "/deals/{deal_id}/agents/investment-decision",
+    summary="Generate Grounded Investment Decision",
+    status_code=status.HTTP_200_OK,
+)
+async def generate_investment_decision(
+    deal_id: uuid.UUID,
+    payload: OrchestrationRunPayload,
+    db: AsyncSession = Depends(get_db),
+    context: TenantContext = Depends(validate_deal_membership),
+) -> Dict[str, Any]:
+    """Execute full 8-agent diligence orchestration and synthesize an institutional investment decision."""
+    payload.orchestration_mode = "FULL_DEAL_DECISION"
+    return await orchestrate_agents(deal_id, payload, db, context)
+
+
+@router.get(
+    "/deals/{deal_id}/agents/runs/{run_id}",
+    summary="Get Agent Run Details",
+    status_code=status.HTTP_200_OK,
+)
+async def get_agent_run(
+    deal_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    context: TenantContext = Depends(validate_deal_membership),
+) -> Dict[str, Any]:
+    """Retrieve details of an orchestration run by ID."""
+    return await get_execution_details(deal_id, run_id, db, context)
+
+
+@router.get(
+    "/deals/{deal_id}/agents/runs/{run_id}/agents",
+    summary="Get Agent Run Specialist Assessments",
+    status_code=status.HTTP_200_OK,
+)
+async def get_agent_run_specialists(
+    deal_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    context: TenantContext = Depends(validate_deal_membership),
+) -> List[Dict[str, Any]]:
+    """Retrieve list of specialist agent assessment results for an orchestration run."""
+    details = await get_execution_details(deal_id, run_id, db, context)
+    return details.get("assessments", [])

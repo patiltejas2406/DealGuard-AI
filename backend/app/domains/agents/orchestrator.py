@@ -6,6 +6,8 @@ import uuid
 from typing import Dict, List, Optional, Set
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domains.ai.schemas import CitationRef
+
 from app.domains.agents.base import BaseSpecialistAgent
 from app.domains.agents.contract import (
     AgentConfidence,
@@ -100,10 +102,10 @@ class AgentOrchestrator:
         self, orchestration_mode: Optional[str], query: Optional[str]
     ) -> List[AgentId]:
         """
-        Determine which specialist agents are required based on mode or query taxonomy.
+        Determine which specialist agents are required based on mode or natural language/Hinglish intent.
         """
         mode = (orchestration_mode or "").upper()
-        if mode in ["FULL", "FULL_DEAL_DECISION", "COMPREHENSIVE"] or not mode:
+        if mode in ["FULL", "FULL_DEAL_DECISION", "COMPREHENSIVE"]:
             return [
                 AgentId.FINANCE,
                 AgentId.VALUATION,
@@ -124,29 +126,65 @@ class AgentOrchestrator:
         if mode == "LEGAL_AND_RISK":
             return [AgentId.LEGAL, AgentId.RISK]
 
-        # Dynamic Query Intent Taxonomy Routing
+        if query:
+            from app.domains.copilot.intent import CopilotIntent, IntentRouter
+            intent = IntentRouter.classify_intent(query)
+
+            domain_to_agents: Dict[str, List[AgentId]] = {
+                "FINANCIALS": [AgentId.FINANCE],
+                "QOE": [AgentId.FINANCE],
+                "RISKS": [AgentId.RISK],
+                "LEGAL_CONTRACTS": [AgentId.LEGAL],
+                "TECHNOLOGY_OPERATIONS": [AgentId.TECHNOLOGY],
+                "VALUATION": [AgentId.VALUATION],
+                "SYNERGIES": [AgentId.SYNERGY],
+                "INTEGRATION": [AgentId.INTEGRATION],
+                "DECISION_SCORE": [AgentId.FINANCE, AgentId.RISK, AgentId.VALUATION, AgentId.LEGAL, AgentId.TECHNOLOGY, AgentId.INTEGRATION, AgentId.SYNERGY],
+            }
+
+            if intent == CopilotIntent.INVESTMENT_DECISION:
+                return [
+                    AgentId.FINANCE,
+                    AgentId.VALUATION,
+                    AgentId.RISK,
+                    AgentId.LEGAL,
+                    AgentId.TECHNOLOGY,
+                    AgentId.SCENARIO,
+                    AgentId.INTEGRATION,
+                    AgentId.SYNERGY,
+                ]
+
+            candidate_domains = IntentRouter.get_candidate_domains(intent)
+            selected: Set[AgentId] = set()
+            for cd in candidate_domains:
+                for a in domain_to_agents.get(cd, []):
+                    selected.add(a)
+
+            if selected:
+                return list(selected)
+
+        # Dynamic Query Intent Taxonomy Fallback
         q_lower = (query or "").lower()
-        selected: Set[AgentId] = set()
+        selected_fallback: Set[AgentId] = set()
 
         if any(w in q_lower for w in ["finance", "revenue", "ebitda", "qoe", "margin"]):
-            selected.add(AgentId.FINANCE)
+            selected_fallback.add(AgentId.FINANCE)
         if any(w in q_lower for w in ["valuation", "dcf", "multiple", "comps", "precedent"]):
-            selected.add(AgentId.VALUATION)
+            selected_fallback.add(AgentId.VALUATION)
         if any(w in q_lower for w in ["risk", "threat", "concern", "cybersecurity"]):
-            selected.add(AgentId.RISK)
+            selected_fallback.add(AgentId.RISK)
         if any(w in q_lower for w in ["legal", "contract", "change of control", "compliance"]):
-            selected.add(AgentId.LEGAL)
+            selected_fallback.add(AgentId.LEGAL)
         if any(w in q_lower for w in ["tech", "cloud", "spof", "architecture", "sla"]):
-            selected.add(AgentId.TECHNOLOGY)
+            selected_fallback.add(AgentId.TECHNOLOGY)
         if any(w in q_lower for w in ["scenario", "what-if", "recession", "monte carlo"]):
-            selected.add(AgentId.SCENARIO)
+            selected_fallback.add(AgentId.SCENARIO)
         if any(w in q_lower for w in ["integration", "100-day", "milestone", "workstream"]):
-            selected.add(AgentId.INTEGRATION)
+            selected_fallback.add(AgentId.INTEGRATION)
         if any(w in q_lower for w in ["synergy", "cost savings", "upsell", "waterfall"]):
-            selected.add(AgentId.SYNERGY)
+            selected_fallback.add(AgentId.SYNERGY)
 
-        if not selected:
-            # Default to complete diligence if intent is broad (e.g. "Should we acquire?")
+        if not selected_fallback:
             return [
                 AgentId.FINANCE,
                 AgentId.VALUATION,
@@ -158,7 +196,27 @@ class AgentOrchestrator:
                 AgentId.SYNERGY,
             ]
 
-        return list(selected)
+        return list(selected_fallback)
+
+    def aggregate_evidence(
+        self,
+        deal_id: uuid.UUID,
+        specialist_assessments: Dict[AgentId, BaseAgentAssessment],
+    ) -> List[CitationRef]:
+        """
+        Deduplicate citations across all specialist agents, verify origin, and preserve provenance.
+        """
+        seen_keys = set()
+        deduped: List[CitationRef] = []
+
+        for a_id, assessment in specialist_assessments.items():
+            for cit in assessment.citations:
+                key = (cit.document_name, cit.page_number, cit.exact_quote[:80] if cit.exact_quote else "")
+                if key not in seen_keys:
+                    seen_keys.add(key)
+                    deduped.append(cit)
+
+        return deduped
 
     async def orchestrate(
         self,
@@ -168,7 +226,7 @@ class AgentOrchestrator:
     ) -> AgentOrchestrationResult:
         """
         Execute orchestrated multi-agent diligence pipeline with bounded steps,
-        parallel specialist execution, failure containment, and decision synthesis.
+        parallel specialist execution, failure containment, evidence aggregation, and decision synthesis.
         """
         start_time = time.perf_counter()
         execution_id = uuid.uuid4()
@@ -178,7 +236,7 @@ class AgentOrchestrator:
             orchestration_mode, request.query
         )
 
-        # 2. Parallel Specialist Agent Execution with Timeouts
+        # 2. Parallel Specialist Agent Execution with Timeouts & Failure Containment
         async def run_single_specialist(a_id: AgentId) -> tuple[AgentId, BaseAgentAssessment]:
             agent_inst = self._instantiate_specialist(a_id)
             try:
@@ -190,8 +248,8 @@ class AgentOrchestrator:
                 return a_id, BaseAgentAssessment(
                     agent_id=a_id,
                     domain=agent_inst.metadata.domain,
-                    status=AgentStatus.FAILED,
-                    summary=f"Agent timed out after {self.AGENT_TIMEOUT_SECONDS}s limit.",
+                    status=AgentStatus.AGENT_UNAVAILABLE,
+                    summary=f"Specialist agent timed out after {self.AGENT_TIMEOUT_SECONDS}s limit.",
                     confidence=AgentConfidence.LOW,
                     confidence_score=0.0,
                     negative_drivers=[f"Agent execution exceeded timeout limit ({self.AGENT_TIMEOUT_SECONDS}s)."],
@@ -201,7 +259,7 @@ class AgentOrchestrator:
                     agent_id=a_id,
                     domain=agent_inst.metadata.domain,
                     status=AgentStatus.FAILED,
-                    summary=f"Agent encountered error: {str(exc)}",
+                    summary=f"Specialist agent encountered error: {str(exc)}",
                     confidence=AgentConfidence.LOW,
                     confidence_score=0.0,
                     negative_drivers=[f"Specialist agent error: {str(exc)}"],
@@ -229,6 +287,7 @@ class AgentOrchestrator:
             entity_id=execution_id,
             details={
                 "orchestration_mode": orchestration_mode,
+                "query": request.query,
                 "selected_agents": [a.value for a in selected_agents],
                 "recommendation": decision_assessment.recommendation.value,
                 "confidence": decision_assessment.confidence.value,

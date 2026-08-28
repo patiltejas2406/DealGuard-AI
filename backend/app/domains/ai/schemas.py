@@ -27,12 +27,17 @@ class GroundedFinding(BaseModel):
     category: str
     headline: str
     detailed_reasoning: str
+    finding_type: str = Field(
+        default="FACT",
+        description="Categorization of finding: FACT (verified data room evidence/calculation), PREDICTION (statistical/ML inference), RECOMMENDATION (expert diligence guidance)"
+    )
     severity_level: Optional[str] = None  # LOW, MEDIUM, HIGH, CRITICAL
     confidence_score: float = Field(ge=0.0, le=1.0, default=0.90)
     is_deterministic_calculation: bool = False
     calculation_source_engine: Optional[str] = None
     citations: List[CitationRef] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
 
 
 class GroundedRecommendation(BaseModel):

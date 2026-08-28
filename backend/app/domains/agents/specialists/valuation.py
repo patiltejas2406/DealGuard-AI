@@ -100,6 +100,36 @@ class ValuationAgent(BaseSpecialistAgent):
         prec_res = await self.session.execute(prec_q)
         precedents = list(prec_res.scalars().all())
 
+        if not deal:
+            return ValuationAssessment(
+                agent_id=self.agent_id,
+                domain="VALUATION",
+                status=AgentStatus.INSUFFICIENT_EVIDENCE,
+                summary="Target deal not found in active workspace.",
+                confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
+                confidence_score=0.10,
+                unresolved_issues=["Deal entity is missing."],
+                data_gaps=["Deal enterprise value, capital structure, and DCF projection models"],
+                required_diligence=["Initialize deal valuation profile and enterprise value parameters."],
+            )
+
+        if not val_projects and not comps and not precedents and (not target_ev or target_ev <= 0):
+            return ValuationAssessment(
+                agent_id=self.agent_id,
+                domain="VALUATION",
+                status=AgentStatus.INSUFFICIENT_EVIDENCE,
+                summary="Insufficient valuation models or market multiples in the Data Room.",
+                confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
+                confidence_score=0.20,
+                unresolved_issues=["No DCF models, WACC assumptions, or peer trading comp cohorts ingested."],
+                data_gaps=[
+                    "5-year discounted cash flow (DCF) financial forecast model",
+                    "Weighted Average Cost of Capital (WACC) debt/equity parameters",
+                    "Public comparable companies trading cohort multiples",
+                ],
+                required_diligence=["Configure DCF valuation model and select comparable peer group in Valuation Lab."],
+            )
+
         # Compute deterministic benchmark values
         dcf_val = target_ev * 1.08  # Default benchmark or extracted from outputs
         comps_val = target_ev * 0.96 if comps else target_ev * 1.02
@@ -134,6 +164,7 @@ class ValuationAgent(BaseSpecialistAgent):
                 category="VALUATION_SYNTHESIS",
                 headline="Multi-Method Enterprise Valuation Benchmark",
                 detailed_reasoning=f"DCF implied EV is ${dcf_val:,.0f}, trading comps peer median implied EV is ${comps_val:,.0f}, yielding blended fair EV of ${blended_mid:,.0f}.",
+                finding_type="FACT",
                 severity_level="LOW" if margin_of_safety_pct >= 0 else "MEDIUM",
                 confidence_score=0.91,
                 is_deterministic_calculation=True,
@@ -141,6 +172,12 @@ class ValuationAgent(BaseSpecialistAgent):
                 citations=[],
             )
         ]
+
+        data_gaps = []
+        if not comps:
+            data_gaps.append("Direct public market trading comparables cohort customization.")
+        if not precedents:
+            data_gaps.append("Verified precedent M&A transaction multiple database links.")
 
         return ValuationAssessment(
             agent_id=self.agent_id,
@@ -153,6 +190,14 @@ class ValuationAgent(BaseSpecialistAgent):
             positive_drivers=positive_drivers,
             negative_drivers=negative_drivers,
             unresolved_issues=[] if comps else ["Trading comps peer set is limited to default industry proxies."],
+            data_gaps=data_gaps,
+            metrics={
+                "target_asking_ev_usd": target_ev,
+                "implied_dcf_ev_usd": dcf_val,
+                "blended_fair_ev_usd": blended_mid,
+                "margin_of_safety_pct": round(margin_of_safety_pct, 2),
+                "wacc_rate": 0.095,
+            },
             required_diligence=["Finalize working capital target peg and net debt adjustments before purchase agreement."],
             deterministic_references=deterministic_refs,
             implied_ev_dcf=dcf_val,

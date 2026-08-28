@@ -83,6 +83,34 @@ class TechnologyOperationsAgent(BaseSpecialistAgent):
         self.verify_tool("spof_analyzer_tool")
         tools_invoked.append("spof_analyzer_tool")
 
+        if not tech_findings and not op_metrics:
+            return TechnologyAssessment(
+                agent_id=self.agent_id,
+                domain="TECHNOLOGY_OPERATIONS",
+                status=AgentStatus.INSUFFICIENT_EVIDENCE,
+                summary="Insufficient technology architecture disclosures or operational metrics in the Data Room.",
+                confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
+                confidence_score=0.20,
+                unresolved_issues=["No software architecture documentation, cloud telemetry, or SLA incident reports ingested."],
+                data_gaps=[
+                    "Cloud infrastructure architecture blueprints and monthly hosting cost breakdown",
+                    "Software repository tech debt, dependency tree, and third-party license audit",
+                    "SLA uptime telemetry and P1/P2 historical incident logs",
+                ],
+                required_diligence=["Ingest engineering architecture overview and cloud infrastructure cost reports."],
+                deterministic_references={
+                    "tech_findings_count": 0,
+                    "critical_findings_count": 0,
+                    "spofs_count": 0,
+                    "metrics_analyzed": 0,
+                },
+                tech_debt_level="DATA_ROOM_PENDING",
+                cloud_architecture_score=0.0,
+                spof_count=0,
+                sla_compliance_rate=0.0,
+                cybersecurity_exceptions_count=0,
+            )
+
         spof_findings = [f for f in tech_findings if "SPOF" in f.category or "SINGLE_POINT" in f.category or "ARCHITECTURAL" in f.category]
         critical_tech = [f for f in tech_findings if f.severity in ["CRITICAL", "HIGH"]]
 
@@ -110,6 +138,7 @@ class TechnologyOperationsAgent(BaseSpecialistAgent):
                     category=tf.category,
                     headline=tf.title,
                     detailed_reasoning=f"{tf.technical_fact} | Impact: {tf.business_impact or 'Operational'} | Recommendation: {tf.recommendation}",
+                    finding_type="FACT",
                     severity_level=tf.severity,
                     confidence_score=0.91,
                     is_deterministic_calculation=True,
@@ -120,9 +149,11 @@ class TechnologyOperationsAgent(BaseSpecialistAgent):
 
         summary = (
             f"Technology diligence complete: Evaluated {len(tech_findings)} technical findings ({len(critical_tech)} high/critical). SPOFs: {len(spof_findings)}."
-            if tech_findings
-            else "Standard modern SaaS technology stack reviewed."
         )
+
+        data_gaps = []
+        if len(tech_findings) < 3:
+            data_gaps.append("Comprehensive third-party source code vulnerability and SBOM license scan.")
 
         return TechnologyAssessment(
             agent_id=self.agent_id,
@@ -135,6 +166,13 @@ class TechnologyOperationsAgent(BaseSpecialistAgent):
             positive_drivers=positive_drivers,
             negative_drivers=negative_drivers,
             unresolved_issues=unresolved,
+            data_gaps=data_gaps,
+            metrics={
+                "tech_findings_count": len(tech_findings),
+                "critical_findings_count": len(critical_tech),
+                "spofs_count": len(spof_findings),
+                "metrics_analyzed": len(op_metrics),
+            },
             required_diligence=["Execute 30-day post-signing key engineering architect retention agreements."],
             deterministic_references={
                 "tech_findings_count": len(tech_findings),

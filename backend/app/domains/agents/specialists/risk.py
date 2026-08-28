@@ -130,6 +130,7 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
                     category=r.category,
                     headline=r.title,
                     detailed_reasoning=f"{r.description} Mitigation: {r.mitigation_strategy or r.recommendation or 'Standard indemnification'}",
+                    finding_type="FACT",
                     severity_level=r.risk_level,
                     confidence_score=r.confidence_score or 0.90,
                     is_deterministic_calculation=True,
@@ -184,6 +185,22 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
                         negative_drivers.append(f"[{model_label} PREDICTION] Elevated downside risk probability: {ml_prob*100:.1f}% ({ml_wrapper.metadata.model_id})")
                     elif ml_prob:
                         positive_drivers.append(f"[{model_label} PREDICTION] Downside risk probability within acceptable bounds: {ml_prob*100:.1f}% ({ml_wrapper.metadata.model_id})")
+
+                    if pred_res.explanation:
+                        findings.append(
+                            GroundedFinding(
+                                domain_pillar="RISK",
+                                category="ML_PREDICTIVE_DOWNSIDE",
+                                headline=f"Empirical ML Downside Probability ({ml_prob*100:.1f}%)",
+                                detailed_reasoning=f"Model {ml_wrapper.metadata.model_id} explanation: {pred_res.explanation.narrative_summary}",
+                                finding_type="PREDICTION",
+                                severity_level="HIGH" if ml_prob and ml_prob > 0.35 else "LOW",
+                                confidence_score=pred_res.prediction_confidence or 0.88,
+                                is_deterministic_calculation=False,
+                                calculation_source_engine="app.domains.ml.engine",
+                                citations=[],
+                            )
+                        )
             except Exception:
                 pass
 
@@ -194,6 +211,14 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
             else "No risk records logged in data room register."
         )
 
+        data_gaps = []
+        if not risks:
+            data_gaps = [
+                "17-pillar standardized risk register with severity and likelihood scoring",
+                "Cybersecurity third-party penetration testing and SOC 2 Type II audit reports",
+                "Customer revenue concentration and key person dependency disclosure schedules",
+            ]
+
         det_refs = {
             "total_risks": len(risks),
             "critical_risks": len(critical_risks),
@@ -202,6 +227,19 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
         }
         if ml_prob is not None:
             det_refs["ml_downside_risk_probability"] = round(ml_prob, 4)
+
+        structured_risks = [
+            {
+                "id": str(r.id),
+                "title": r.title,
+                "category": r.category,
+                "severity": r.severity,
+                "likelihood": r.likelihood,
+                "score": r.score,
+                "level": r.risk_level,
+            }
+            for r in risks
+        ]
 
         return RiskAssessment(
             agent_id=self.agent_id,
@@ -214,6 +252,15 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
             positive_drivers=positive_drivers,
             negative_drivers=negative_drivers,
             unresolved_issues=unresolved,
+            data_gaps=data_gaps,
+            metrics={
+                "total_risks": len(risks),
+                "critical_risks": len(critical_risks),
+                "high_risks": len(high_risks),
+                "average_risk_score": round(avg_score, 2),
+                "ml_downside_probability": ml_prob,
+            },
+            risks=structured_risks,
             required_diligence=["Require special closing indemnity covenants for identified customer concentration and cybersecurity items."],
             citations=citations,
             deterministic_references=det_refs,

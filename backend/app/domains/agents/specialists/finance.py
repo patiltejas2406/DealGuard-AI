@@ -54,6 +54,17 @@ class FinanceIntelligenceAgent(BaseSpecialistAgent):
         deal_id = request.deal_id
         org_id = request.organization_id
 
+        # Tool 0: Financial Statements
+        self.verify_tool("financial_statements_tool")
+        tools_invoked.append("financial_statements_tool")
+
+        stmts_q = select(FinancialStatement).where(
+            FinancialStatement.deal_id == deal_id,
+            FinancialStatement.organization_id == org_id,
+        ).order_by(FinancialStatement.statement_date.desc() if hasattr(FinancialStatement, "statement_date") else FinancialStatement.created_at.desc())
+        stmts_res = await self.session.execute(stmts_q)
+        statements = list(stmts_res.scalars().all())
+
         # Tool 1: Financial Metrics
         self.verify_tool("financial_metrics_tool")
         tools_invoked.append("financial_metrics_tool")
@@ -107,7 +118,7 @@ class FinanceIntelligenceAgent(BaseSpecialistAgent):
                 )
             )
 
-        if not metrics and not qoe_items:
+        if not metrics and not qoe_items and not statements:
             return FinanceAssessment(
                 agent_id=self.agent_id,
                 domain="FINANCIALS",
@@ -115,13 +126,26 @@ class FinanceIntelligenceAgent(BaseSpecialistAgent):
                 summary="Insufficient financial statements or metrics in the Data Room.",
                 confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
                 confidence_score=0.20,
-                unresolved_issues=["No audited income statements or historical P&L ingested."],
+                unresolved_issues=["No audited income statements, balance sheets, or historical P&L ingested."],
+                data_gaps=[
+                    "3-statement audited financial models (P&L, Balance Sheet, Cash Flow)",
+                    "Quality of Earnings (QoE) adjustment workpapers",
+                    "Revenue recognition and ARR retention breakdown by customer",
+                ],
                 required_diligence=["Ingest at least 3 years of audited P&L, balance sheets, and QoE workpapers."],
                 citations=citations,
             )
 
         revenue_val = next((m.value for m in metrics if m.metric_name == "REVENUE"), 0.0)
         ebitda_margin_val = next((m.value for m in metrics if m.metric_name == "EBITDA_MARGIN"), 0.0)
+
+        # Fallback to statement data if metrics table is sparse
+        if revenue_val == 0.0 and statements:
+            revenue_val = float(getattr(statements[0], "revenue", 0.0) or 0.0)
+            ebitda_val = float(getattr(statements[0], "ebitda", 0.0) or 0.0)
+            if revenue_val > 0 and ebitda_val > 0:
+                ebitda_margin_val = ebitda_val / revenue_val
+
         net_qoe = sum(
             item.amount if item.treatment == "ADD_BACK" else -item.amount
             for item in qoe_items
@@ -134,6 +158,8 @@ class FinanceIntelligenceAgent(BaseSpecialistAgent):
             "ebitda_margin_ratio": ebitda_margin_val,
             "qoe_adjustments_net_usd": net_qoe,
             "normalized_ebitda_usd": normalized_ebitda,
+            "statements_count": len(statements),
+            "qoe_items_count": len(qoe_items),
         }
 
         positive_drivers = []
@@ -153,6 +179,7 @@ class FinanceIntelligenceAgent(BaseSpecialistAgent):
                 category="PROFITABILITY",
                 headline="Normalized EBITDA Quality of Earnings Bridge",
                 detailed_reasoning=f"Reported revenue is ${revenue_val:,.2f} with normalized EBITDA of ${normalized_ebitda:,.2f} after accounting for {len(qoe_items)} QoE adjustments.",
+                finding_type="FACT",
                 severity_level="LOW" if ebitda_margin_val >= 0.15 else "MEDIUM",
                 confidence_score=0.92,
                 is_deterministic_calculation=True,
@@ -160,6 +187,12 @@ class FinanceIntelligenceAgent(BaseSpecialistAgent):
                 citations=citations,
             )
         ]
+
+        data_gaps = []
+        if len(statements) < 3:
+            data_gaps.append("Multi-year historical audited financial statements (only 1-2 periods available).")
+        if not qoe_items:
+            data_gaps.append("Detailed third-party QoE schedule with line-item management add-back justifications.")
 
         return FinanceAssessment(
             agent_id=self.agent_id,
@@ -172,6 +205,13 @@ class FinanceIntelligenceAgent(BaseSpecialistAgent):
             positive_drivers=positive_drivers,
             negative_drivers=negative_drivers,
             unresolved_issues=[] if len(metrics) >= 2 else ["Limited historical quarterly breakdowns."],
+            data_gaps=data_gaps,
+            metrics={
+                "revenue": revenue_val,
+                "ebitda_margin": ebitda_margin_val,
+                "normalized_ebitda": normalized_ebitda,
+                "net_qoe": net_qoe,
+            },
             required_diligence=["Verify working capital peg and debt-like items prior to final closing."],
             citations=citations,
             deterministic_references=deterministic_refs,

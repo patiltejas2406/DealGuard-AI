@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
-from app.domains.ai.schemas import CitationRef, GroundedFinding
+from app.domains.ai.schemas import CitationRef, GroundedFinding, GroundedRecommendation
 
 
 class AgentLifecyclePhase(str, Enum):
@@ -47,6 +47,7 @@ class AgentStatus(str, Enum):
     SUCCESS = "SUCCESS"
     PARTIAL = "PARTIAL"
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+    AGENT_UNAVAILABLE = "AGENT_UNAVAILABLE"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
 
@@ -112,6 +113,10 @@ class BaseAgentAssessment(BaseModel):
     negative_drivers: List[str] = Field(default_factory=list)
     unresolved_issues: List[str] = Field(default_factory=list)
     required_diligence: List[str] = Field(default_factory=list)
+    data_gaps: List[str] = Field(default_factory=list, description="Explicit missing data room items/disclosures")
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+    risks: List[Dict[str, Any]] = Field(default_factory=list)
+    recommendations: List[GroundedRecommendation] = Field(default_factory=list)
     
     # Provenance and Traceability
     citations: List[CitationRef] = Field(default_factory=list)
@@ -207,7 +212,16 @@ class DecisionAssessment(BaseAgentAssessment):
         description="Immutable 0-100 composite score from the authoritative DecisionScore engine."
     )
     executive_rationale: str
+    key_decision_drivers: List[str] = Field(default_factory=list)
+    financial_view: Optional[str] = None
+    qoe_view: Optional[str] = None
+    risk_view: Optional[str] = None
+    legal_view: Optional[str] = None
+    technology_view: Optional[str] = None
+    valuation_view: Optional[str] = None
+    synergy_integration_view: Optional[str] = None
     required_conditions: List[str] = Field(default_factory=list)
+    required_mitigations: List[str] = Field(default_factory=list)
     human_review_required: bool = False
     escalation_reasons: List[str] = Field(default_factory=list)
     recommended_human_action: str

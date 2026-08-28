@@ -21,6 +21,7 @@ import {
   ChevronRight,
   ExternalLink,
   Zap,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   api,
@@ -424,6 +425,105 @@ export default function AgentOrchestrationPage() {
                     </ul>
                   </div>
                 </div>
+
+                {/* Multi-Domain Specialist Synthesis Views */}
+                {(orchestrationResult.decision_assessment.financial_view ||
+                  orchestrationResult.decision_assessment.risk_view ||
+                  orchestrationResult.decision_assessment.legal_view ||
+                  orchestrationResult.decision_assessment.technology_view ||
+                  orchestrationResult.decision_assessment.valuation_view ||
+                  orchestrationResult.decision_assessment.synergy_integration_view) && (
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                      <Layers className="h-3.5 w-3.5 text-primary-400" />
+                      Specialist Domain Synthesis Views
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {orchestrationResult.decision_assessment.financial_view && (
+                        <div className="rounded-lg border border-surface-border bg-surface/40 p-3 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold">Financial & QoE</span>
+                          <p className="text-xs text-gray-300">{orchestrationResult.decision_assessment.financial_view}</p>
+                        </div>
+                      )}
+                      {orchestrationResult.decision_assessment.risk_view && (
+                        <div className="rounded-lg border border-surface-border bg-surface/40 p-3 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-rose-400 font-bold">Risk Assessment</span>
+                          <p className="text-xs text-gray-300">{orchestrationResult.decision_assessment.risk_view}</p>
+                        </div>
+                      )}
+                      {orchestrationResult.decision_assessment.valuation_view && (
+                        <div className="rounded-lg border border-surface-border bg-surface/40 p-3 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-blue-400 font-bold">Valuation Multiples</span>
+                          <p className="text-xs text-gray-300">{orchestrationResult.decision_assessment.valuation_view}</p>
+                        </div>
+                      )}
+                      {orchestrationResult.decision_assessment.legal_view && (
+                        <div className="rounded-lg border border-surface-border bg-surface/40 p-3 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-amber-400 font-bold">Legal & Contracts</span>
+                          <p className="text-xs text-gray-300">{orchestrationResult.decision_assessment.legal_view}</p>
+                        </div>
+                      )}
+                      {orchestrationResult.decision_assessment.technology_view && (
+                        <div className="rounded-lg border border-surface-border bg-surface/40 p-3 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-purple-400 font-bold">Technology & Architecture</span>
+                          <p className="text-xs text-gray-300">{orchestrationResult.decision_assessment.technology_view}</p>
+                        </div>
+                      )}
+                      {orchestrationResult.decision_assessment.synergy_integration_view && (
+                        <div className="rounded-lg border border-surface-border bg-surface/40 p-3 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-cyan-400 font-bold">Synergies & 100-Day Plan</span>
+                          <p className="text-xs text-gray-300">{orchestrationResult.decision_assessment.synergy_integration_view}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Required Conditions & Mitigations */}
+                {((orchestrationResult.decision_assessment.required_conditions &&
+                  orchestrationResult.decision_assessment.required_conditions.length > 0) ||
+                  (orchestrationResult.decision_assessment.required_mitigations &&
+                    orchestrationResult.decision_assessment.required_mitigations.length > 0)) && (
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 space-y-2">
+                    <h5 className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Mandatory Pre-Closing Conditions & Escrow Covenants
+                    </h5>
+                    <ul className="space-y-1 text-xs text-gray-300">
+                      {(orchestrationResult.decision_assessment.required_conditions || []).map((c, i) => (
+                        <li key={`c-${i}`} className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                      {(orchestrationResult.decision_assessment.required_mitigations || []).map((m, i) => (
+                        <li key={`m-${i}`} className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          <span>{m}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Data Room Diligence Gaps */}
+                {orchestrationResult.decision_assessment.data_gaps &&
+                  orchestrationResult.decision_assessment.data_gaps.length > 0 && (
+                    <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-4 space-y-2">
+                      <h5 className="text-xs font-semibold text-orange-400 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        Identified Data Room Evidence Gaps ({orchestrationResult.decision_assessment.data_gaps.length})
+                      </h5>
+                      <ul className="space-y-1 text-xs text-gray-300">
+                        {orchestrationResult.decision_assessment.data_gaps.map((g, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-orange-400 mt-0.5">•</span>
+                            <span>{g}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                 {/* Grounded Citations */}
                 {orchestrationResult.decision_assessment.citations.length > 0 && (

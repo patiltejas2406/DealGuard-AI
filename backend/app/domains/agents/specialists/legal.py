@@ -91,6 +91,33 @@ class LegalIntelligenceAgent(BaseSpecialistAgent):
         comp_res = await self.session.execute(comp_q)
         compliance_items = list(comp_res.scalars().all())
 
+        if not clauses and not legal_findings and not compliance_items:
+            return LegalAssessment(
+                agent_id=self.agent_id,
+                domain="LEGAL_CONTRACTS",
+                status=AgentStatus.INSUFFICIENT_EVIDENCE,
+                summary="Insufficient contract repository records or legal diligence disclosures in the Data Room.",
+                confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
+                confidence_score=0.20,
+                unresolved_issues=["No material contracts, MSAs, or change-of-control schedules ingested."],
+                data_gaps=[
+                    "Top 10 customer Master Services Agreements (MSAs) and change-of-control clauses",
+                    "Key vendor and cloud infrastructure licensing agreements",
+                    "Regulatory compliance audit reports and litigation history",
+                ],
+                required_diligence=["Upload executed customer agreements and commercial contracts to the Data Room."],
+                deterministic_references={
+                    "contracts_analyzed": 0,
+                    "change_of_control_triggers": 0,
+                    "value_at_risk_usd": 0.0,
+                    "compliance_requirements_count": 0,
+                },
+                contracts_analyzed_count=0,
+                change_of_control_clauses_count=0,
+                value_at_risk_usd=0.0,
+                regulatory_compliance_status="DATA_ROOM_PENDING",
+            )
+
         coc_clauses = [c for c in clauses if c.category == "CHANGE_OF_CONTROL" or c.requires_consent]
         total_var = sum(f.monetary_exposure for f in legal_findings) if legal_findings else 0.0
 
@@ -117,6 +144,7 @@ class LegalIntelligenceAgent(BaseSpecialistAgent):
                     category=cl.category,
                     headline=cl.clause_title,
                     detailed_reasoning=f'Clause text: "{cl.clause_text}". Requires Consent: {cl.requires_consent}.',
+                    finding_type="FACT",
                     severity_level="HIGH" if cl.requires_consent else "LOW",
                     confidence_score=0.94,
                     is_deterministic_calculation=False,
@@ -126,9 +154,11 @@ class LegalIntelligenceAgent(BaseSpecialistAgent):
 
         summary = (
             f"Legal diligence complete: Analyzed {len(clauses)} clauses and {len(legal_findings)} findings. Change of control triggers: {len(coc_clauses)}. Legal Exposure: ${total_var:,.0f}."
-            if (clauses or legal_findings)
-            else "Legal contract baseline reviewed; standard representations and warranties apply."
         )
+
+        data_gaps = []
+        if len(clauses) < 5:
+            data_gaps.append("Comprehensive vendor and employee IP assignment contract review.")
 
         return LegalAssessment(
             agent_id=self.agent_id,
@@ -141,6 +171,13 @@ class LegalIntelligenceAgent(BaseSpecialistAgent):
             positive_drivers=positive_drivers,
             negative_drivers=negative_drivers,
             unresolved_issues=unresolved,
+            data_gaps=data_gaps,
+            metrics={
+                "contracts_analyzed": len(clauses),
+                "change_of_control_triggers": len(coc_clauses),
+                "value_at_risk_usd": total_var,
+                "compliance_items": len(compliance_items),
+            },
             required_diligence=["Execute counterparty consent solicitation schedule 30 days prior to targeted closing date."],
             deterministic_references={
                 "contracts_analyzed": len(clauses),
