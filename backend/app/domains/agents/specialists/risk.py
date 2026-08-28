@@ -138,28 +138,40 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
                 )
             )
 
-        # Tool 3 (Optional ML): Deal Downside Risk Probability Model
+        # Tool 3 (Optional ML): Deal Downside Risk Probability Model (Real Data Preferred)
         ml_prob = None
         from app.domains.ml.registry import ExtendedModelRegistry
         from app.domains.ml.schemas import PredictionRequest
-        ml_wrapper = ExtendedModelRegistry.get_trained_model("dealguard-risk-probability-v1")
+        ml_wrapper = ExtendedModelRegistry.get_trained_model("dealguard-real-downside-risk-v1") or ExtendedModelRegistry.get_trained_model("dealguard-risk-probability-v1")
         if ml_wrapper:
             self.verify_tool("ml_prediction_tool")
             tools_invoked.append("ml_prediction_tool")
             try:
-                feat = {
-                    "revenue_growth_rate_pct": 0.15,
-                    "gross_margin_pct": 0.70,
-                    "ebitda_margin_pct": 0.20,
-                    "qoe_add_backs_ratio": 0.08,
-                    "debt_to_ebitda_leverage": 3.0,
-                    "cybersecurity_score": 80.0,
-                    "compliance_violations_count": len(critical_risks),
-                    "it_systems_overlap_score": 0.40,
-                    "customer_concentration_top3_pct": 0.25,
-                }
+                # Dynamic feature payload matching model architecture
+                if ml_wrapper.metadata.model_id == "dealguard-real-downside-risk-v1":
+                    feat = {
+                        "TermInMonths": 60,
+                        "GrossApproval": 500000.0,
+                        "ThirdPartyDollars": 150000.0,
+                        "BusinessType": "CORPORATION",
+                        "DeliveryMethod": "OTH",
+                        "subpgmdesc": "Standard Guaranty",
+                        "ProjectState": "CA",
+                    }
+                else:
+                    feat = {
+                        "revenue_growth_rate_pct": 0.15,
+                        "gross_margin_pct": 0.70,
+                        "ebitda_margin_pct": 0.20,
+                        "qoe_add_backs_ratio": 0.08,
+                        "debt_to_ebitda_leverage": 3.0,
+                        "cybersecurity_score": 80.0,
+                        "compliance_violations_count": len(critical_risks),
+                        "it_systems_overlap_score": 0.40,
+                        "customer_concentration_top3_pct": 0.25,
+                    }
                 p_req = PredictionRequest(
-                    model_id="dealguard-risk-probability-v1",
+                    model_id=ml_wrapper.metadata.model_id,
                     organization_id=org_id,
                     deal_id=deal_id,
                     features=feat,
@@ -167,10 +179,11 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
                 pred_res = ml_wrapper.predict(p_req)
                 if pred_res.probability_distribution:
                     ml_prob = pred_res.probability_distribution.get("CLASS_1")
+                    model_label = "REAL-DATA ML" if "real" in ml_wrapper.metadata.model_id else "BENCHMARK ML"
                     if ml_prob and ml_prob > 0.35:
-                        negative_drivers.append(f"[ML PREDICTION] High downside risk probability: {ml_prob*100:.1f}%")
+                        negative_drivers.append(f"[{model_label} PREDICTION] Elevated downside risk probability: {ml_prob*100:.1f}% ({ml_wrapper.metadata.model_id})")
                     elif ml_prob:
-                        positive_drivers.append(f"[ML PREDICTION] Downside risk probability within acceptable bounds: {ml_prob*100:.1f}%")
+                        positive_drivers.append(f"[{model_label} PREDICTION] Downside risk probability within acceptable bounds: {ml_prob*100:.1f}% ({ml_wrapper.metadata.model_id})")
             except Exception:
                 pass
 

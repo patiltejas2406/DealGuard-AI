@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from sklearn.metrics import (
     accuracy_score,
+    average_precision_score,
     brier_score_loss,
     confusion_matrix,
     f1_score,
@@ -96,17 +97,21 @@ class ModelEvaluator:
                 else:
                     prob_pos = y_prob
                 roc_auc = float(roc_auc_score(y_true, prob_pos))
+                pr_auc = float(average_precision_score(y_true, prob_pos))
                 brier = float(brier_score_loss(y_true, prob_pos))
                 metrics["auc_roc"] = round(roc_auc, 4)
+                metrics["pr_auc"] = round(pr_auc, 4)
                 metrics["brier_score"] = round(brier, 4)
             except Exception:
-                pass
+                metrics["auc_roc"] = 0.5
+                metrics["pr_auc"] = 0.0
+                metrics["brier_score"] = 0.5
 
         if y_baseline is not None:
             y_base = np.asarray(y_baseline)
             base_acc = float(accuracy_score(y_true, y_base))
             metrics["baseline_accuracy"] = round(base_acc, 4)
-            if base_acc > 1e-6:
+            if base_acc > 0.0:
                 lift = max(0.0, (acc - base_acc) / base_acc) * 100.0
                 metrics["lift_over_baseline_pct"] = round(lift, 2)
 

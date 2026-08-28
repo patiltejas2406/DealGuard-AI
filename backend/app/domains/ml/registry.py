@@ -7,7 +7,13 @@ from app.domains.ml.datasets.benchmark_datasets import (
     generate_ebitda_realization_dataset,
     generate_ma_deal_risk_dataset,
 )
+from app.domains.ml.datasets.real_world_datasets import (
+    load_real_commercial_loan_default_dataset,
+    load_real_credit_risk_dataset,
+    load_real_customer_churn_dataset,
+)
 from app.domains.ml.pipeline import MLTrainingPipeline, TrainedModelWrapper
+from app.domains.ml.real_benchmarking import RealWorldBenchmarkEngine
 from app.domains.ml.schemas import (
     ModelMetadata,
     ModelStatus,
@@ -18,8 +24,8 @@ from app.domains.ml.schemas import (
 
 class ExtendedModelRegistry:
     """
-    Production registry managing trained model instances, training runs,
-    and specification-only catalog entries.
+    Production registry managing real-world trained model instances,
+    synthetic benchmark regression models, training runs, and specification-only catalog entries.
     """
 
     _trained_models: Dict[str, TrainedModelWrapper] = {}
@@ -73,52 +79,109 @@ class ExtendedModelRegistry:
 
 def initialize_and_train_production_models() -> None:
     """
-    Train and register empirical production models for benchmark-supported targets,
-    and register clean specification metadata for dataset-required targets.
+    Train and register empirical real-world production models,
+    train synthetic benchmark models for regression tests,
+    and register clean specification metadata for dataset-limited targets.
     """
-    # 1. Train Enterprise SaaS Churn Model (REAL TRAINED MODEL)
+    # =========================================================================
+    # A. REAL-WORLD DATASET BENCHMARKED & TUNED PRODUCTION MODELS (PHASE 17)
+    # =========================================================================
+
+    # 1. Real-World Telco / B2B Customer Churn (IBM / Open Data, N=7,043)
+    try:
+        df_real_churn, snap_real_churn = load_real_customer_churn_dataset()
+        ExtendedModelRegistry.register_dataset_snapshot(snap_real_churn)
+        real_churn_wrapper, _ = RealWorldBenchmarkEngine.benchmark_and_train_target(
+            snapshot=snap_real_churn,
+            df=df_real_churn,
+            target_column="churn",
+            model_id="dealguard-real-churn-v1",
+            random_state=42,
+            perform_tuning=True,
+        )
+        ExtendedModelRegistry.register_trained_model(real_churn_wrapper)
+    except Exception as e:
+        print(f"Warning: could not train dealguard-real-churn-v1: {e}")
+
+    # 2. Real-World Commercial & Credit Risk (UCI German Credit, N=1,000)
+    try:
+        df_real_credit, snap_real_credit = load_real_credit_risk_dataset()
+        ExtendedModelRegistry.register_dataset_snapshot(snap_real_credit)
+        real_credit_wrapper, _ = RealWorldBenchmarkEngine.benchmark_and_train_target(
+            snapshot=snap_real_credit,
+            df=df_real_credit,
+            target_column="default_risk",
+            model_id="dealguard-real-credit-risk-v1",
+            random_state=42,
+            perform_tuning=True,
+        )
+        ExtendedModelRegistry.register_trained_model(real_credit_wrapper)
+    except Exception as e:
+        print(f"Warning: could not train dealguard-real-credit-risk-v1: {e}")
+
+    # 3. Real-World Commercial Loan Default (U.S. SBA, N=10,000)
+    try:
+        df_real_sba, snap_real_sba = load_real_commercial_loan_default_dataset()
+        ExtendedModelRegistry.register_dataset_snapshot(snap_real_sba)
+        real_sba_wrapper, _ = RealWorldBenchmarkEngine.benchmark_and_train_target(
+            snapshot=snap_real_sba,
+            df=df_real_sba,
+            target_column="loan_default",
+            model_id="dealguard-real-downside-risk-v1",
+            random_state=42,
+            perform_tuning=True,
+        )
+        ExtendedModelRegistry.register_trained_model(real_sba_wrapper)
+    except Exception as e:
+        print(f"Warning: could not train dealguard-real-downside-risk-v1: {e}")
+
+    # =========================================================================
+    # B. SYNTHETIC BENCHMARK REGRESSION MODELS (PHASE 16)
+    # =========================================================================
+
+    # 4. Synthetic SaaS Churn Benchmark
     df_churn, snap_churn = generate_b2b_saas_churn_dataset(n_samples=600, random_state=42)
     ExtendedModelRegistry.register_dataset_snapshot(snap_churn)
-
     churn_wrapper = MLTrainingPipeline.train_and_select(
         snapshot=snap_churn,
         model_id="dealguard-customer-churn-v1",
-        model_name="Enterprise Customer Churn Probability Classifier",
+        model_name="Synthetic Benchmark SaaS Churn Classifier",
         task_type=ModelTaskType.CHURN_PREDICTION,
         framework_preference="xgboost",
         random_state=42,
     )
     ExtendedModelRegistry.register_trained_model(churn_wrapper)
 
-    # 2. Train 17-Pillar Deal Downside Risk Probability Model (REAL TRAINED MODEL)
+    # 5. Synthetic 17-Pillar Deal Downside Risk Benchmark
     df_risk, snap_risk = generate_ma_deal_risk_dataset(n_samples=500, random_state=42)
     ExtendedModelRegistry.register_dataset_snapshot(snap_risk)
-
     risk_wrapper = MLTrainingPipeline.train_and_select(
         snapshot=snap_risk,
         model_id="dealguard-risk-probability-v1",
-        model_name="17-Pillar Deal Downside Risk Probability Model",
+        model_name="Synthetic Benchmark 17-Pillar Risk Probability Model",
         task_type=ModelTaskType.RISK_PROBABILITY,
         framework_preference="xgboost",
         random_state=42,
     )
     ExtendedModelRegistry.register_trained_model(risk_wrapper)
 
-    # 3. Train Post-Deal EBITDA Realization Predictor (REAL TRAINED MODEL)
+    # 6. Synthetic Post-Deal EBITDA Realization Benchmark
     df_ebitda, snap_ebitda = generate_ebitda_realization_dataset(n_samples=500, random_state=42)
     ExtendedModelRegistry.register_dataset_snapshot(snap_ebitda)
-
     ebitda_wrapper = MLTrainingPipeline.train_and_select(
         snapshot=snap_ebitda,
         model_id="dealguard-ebitda-qoe-v1",
-        model_name="Normalized EBITDA & QoE Realization Predictor",
+        model_name="Synthetic Benchmark EBITDA Realization Predictor",
         task_type=ModelTaskType.EBITDA_FORECAST,
         framework_preference="xgboost",
         random_state=42,
     )
     ExtendedModelRegistry.register_trained_model(ebitda_wrapper)
 
-    # 4. Specification-Only Models (Clearly flagged as REGISTERED / DATASET_REQUIRED without fake training)
+    # =========================================================================
+    # C. DATASET-LIMITED SPECIFICATION MODELS (REGISTERED / AWAITING DATA)
+    # =========================================================================
+
     spec_models = [
         ModelMetadata(
             model_id="dealguard-revenue-forecast-v1",
