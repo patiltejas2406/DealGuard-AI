@@ -38,6 +38,7 @@ class AgentToolRegistry:
             "financial_metrics_tool",
             "qoe_bridge_tool",
             "financial_rag_retrieval_tool",
+            "ml_prediction_tool",
         ],
         # 2. Valuation Agent
         AgentId.VALUATION: [
@@ -52,6 +53,7 @@ class AgentToolRegistry:
             "risk_matrix_17_pillar_tool",
             "document_risk_scanner_tool",
             "risk_evidence_tool",
+            "ml_prediction_tool",
         ],
         # 4. Legal Agent
         AgentId.LEGAL: [
@@ -77,17 +79,20 @@ class AgentToolRegistry:
             "integration_milestones_tool",
             "integration_dag_critical_path_tool",
             "integration_health_score_tool",
+            "ml_prediction_tool",
         ],
         # 8. Synergy Agent
         AgentId.SYNERGY: [
             "synergy_waterfall_bridge_tool",
             "synergy_5yr_phasing_tool",
             "synergy_npv_calculator_tool",
+            "ml_prediction_tool",
         ],
         # 9. Deal Decision Agent
         AgentId.DECISION: [
             "decision_score_composite_tool",
             "specialist_assessment_aggregator_tool",
+            "ml_prediction_tool",
         ],
         # Post-Deal Extensions
         AgentId.GROWTH: ["growth_waterfall_tool", "customer_expansion_tool"],

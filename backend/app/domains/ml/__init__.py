@@ -1,32 +1,70 @@
-"""Machine Learning & Explainable AI (XAI) Domain."""
+"""Machine Learning & Explainable AI (XAI) Domain Package."""
 
+from app.domains.ml.data_contracts import (
+    DataType,
+    DatasetMetadata,
+    DatasetSnapshot,
+    DatasetSuitabilityReport,
+    FeatureDefinition,
+    SplitMethod,
+    TargetDefinition,
+    TargetType,
+)
+from app.domains.ml.evaluation import ModelEvaluator
+from app.domains.ml.feature_engineering import DealFeatureExtractor, TabularPreprocessor
+from app.domains.ml.models import (
+    MLDatasetRecord,
+    MLModelRecord,
+    MLPredictionRecord,
+    MLTrainingRunRecord,
+)
+from app.domains.ml.pipeline import MLTrainingPipeline, TrainedModelWrapper
+from app.domains.ml.registry import ExtendedModelRegistry, ModelRegistry
 from app.domains.ml.schemas import (
-    ModelTaskType,
-    ModelStatus,
-    ModelMetadata,
+    FeatureImportance,
     FeatureSet,
+    ModelMetadata,
+    ModelStatus,
+    ModelTaskType,
     PredictionRequest,
     PredictionResult,
-    FeatureImportance,
     SHAPValue,
-    XAIExplanation,
     TrainingRun,
+    XAIExplanation,
 )
-from app.domains.ml.interfaces import BasePredictionModel, ModelRegistry
-from app.domains.ml.registry import initialize_standard_ml_catalog
+from app.domains.ml.service import MLPredictionService
+from app.domains.ml.xai_engine import XAIEngine
 
 __all__ = [
-    "ModelTaskType",
-    "ModelStatus",
-    "ModelMetadata",
+    "DataType",
+    "DatasetMetadata",
+    "DatasetSnapshot",
+    "DatasetSuitabilityReport",
+    "FeatureDefinition",
+    "SplitMethod",
+    "TargetDefinition",
+    "TargetType",
+    "ModelEvaluator",
+    "DealFeatureExtractor",
+    "TabularPreprocessor",
+    "MLDatasetRecord",
+    "MLTrainingRunRecord",
+    "MLModelRecord",
+    "MLPredictionRecord",
+    "MLTrainingPipeline",
+    "TrainedModelWrapper",
+    "ExtendedModelRegistry",
+    "ModelRegistry",
+    "FeatureImportance",
     "FeatureSet",
+    "ModelMetadata",
+    "ModelStatus",
+    "ModelTaskType",
     "PredictionRequest",
     "PredictionResult",
-    "FeatureImportance",
     "SHAPValue",
-    "XAIExplanation",
     "TrainingRun",
-    "BasePredictionModel",
-    "ModelRegistry",
-    "initialize_standard_ml_catalog",
+    "XAIExplanation",
+    "MLPredictionService",
+    "XAIEngine",
 ]

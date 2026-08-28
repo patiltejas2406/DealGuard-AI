@@ -40,6 +40,7 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
                 "risk_matrix_17_pillar_tool",
                 "document_risk_scanner_tool",
                 "risk_evidence_tool",
+                "ml_prediction_tool",
             ],
             evidence_requirements=["17-Pillar Risk Register", "Direct Document Disclosures"],
             confidence_policy="High confidence when all critical/high risks have linked evidence citations.",
@@ -137,12 +138,57 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
                 )
             )
 
+        # Tool 3 (Optional ML): Deal Downside Risk Probability Model
+        ml_prob = None
+        from app.domains.ml.registry import ExtendedModelRegistry
+        from app.domains.ml.schemas import PredictionRequest
+        ml_wrapper = ExtendedModelRegistry.get_trained_model("dealguard-risk-probability-v1")
+        if ml_wrapper:
+            self.verify_tool("ml_prediction_tool")
+            tools_invoked.append("ml_prediction_tool")
+            try:
+                feat = {
+                    "revenue_growth_rate_pct": 0.15,
+                    "gross_margin_pct": 0.70,
+                    "ebitda_margin_pct": 0.20,
+                    "qoe_add_backs_ratio": 0.08,
+                    "debt_to_ebitda_leverage": 3.0,
+                    "cybersecurity_score": 80.0,
+                    "compliance_violations_count": len(critical_risks),
+                    "it_systems_overlap_score": 0.40,
+                    "customer_concentration_top3_pct": 0.25,
+                }
+                p_req = PredictionRequest(
+                    model_id="dealguard-risk-probability-v1",
+                    organization_id=org_id,
+                    deal_id=deal_id,
+                    features=feat,
+                )
+                pred_res = ml_wrapper.predict(p_req)
+                if pred_res.probability_distribution:
+                    ml_prob = pred_res.probability_distribution.get("CLASS_1")
+                    if ml_prob and ml_prob > 0.35:
+                        negative_drivers.append(f"[ML PREDICTION] High downside risk probability: {ml_prob*100:.1f}%")
+                    elif ml_prob:
+                        positive_drivers.append(f"[ML PREDICTION] Downside risk probability within acceptable bounds: {ml_prob*100:.1f}%")
+            except Exception:
+                pass
+
         status = AgentStatus.SUCCESS if risks else AgentStatus.INSUFFICIENT_EVIDENCE
         summary = (
             f"Risk analysis complete: Identified {len(risks)} total risks ({len(critical_risks)} CRITICAL, {len(high_risks)} HIGH). Composite Risk Score: {avg_score:.1f}/25."
             if risks
             else "No risk records logged in data room register."
         )
+
+        det_refs = {
+            "total_risks": len(risks),
+            "critical_risks": len(critical_risks),
+            "high_risks": len(high_risks),
+            "average_risk_score": round(avg_score, 2),
+        }
+        if ml_prob is not None:
+            det_refs["ml_downside_risk_probability"] = round(ml_prob, 4)
 
         return RiskAssessment(
             agent_id=self.agent_id,
@@ -157,12 +203,7 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
             unresolved_issues=unresolved,
             required_diligence=["Require special closing indemnity covenants for identified customer concentration and cybersecurity items."],
             citations=citations,
-            deterministic_references={
-                "total_risks": len(risks),
-                "critical_risks": len(critical_risks),
-                "high_risks": len(high_risks),
-                "average_risk_score": round(avg_score, 2),
-            },
+            deterministic_references=det_refs,
             total_risks_identified=len(risks),
             critical_risks_count=len(critical_risks),
             high_risks_count=len(high_risks),

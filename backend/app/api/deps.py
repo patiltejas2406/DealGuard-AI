@@ -122,13 +122,29 @@ async def validate_deal_membership(
     context: TenantContext = Depends(get_tenant_context),
     db: AsyncSession = Depends(get_db),
 ) -> TenantContext:
-    """
-    Validate that the authenticated user has explicit deal membership,
-    or holds organization ADMIN / superuser privileges.
-    """
-    if context.is_superuser or context.has_role("ADMIN"):
-        return context
+    # 1. Enforce strict tenant isolation: Deal must belong to caller's organization
+    deal_stmt = select(Deal).where(
+        Deal.organization_id == context.organization_id,
+        Deal.id == deal_id,
+    )
+    deal_res = await db.execute(deal_stmt)
+    deal_obj = deal_res.scalar_one_or_none()
+    if not deal_obj:
+        raise NotFoundException("Deal", deal_id)
 
+    # 2. Superusers or Organization Admins have workspace access for deals in their own tenant
+    if context.is_superuser or context.has_role("ADMIN"):
+        return TenantContext(
+            organization_id=context.organization_id,
+            user_id=context.user_id,
+            roles=context.roles,
+            permissions=context.permissions,
+            deal_id=deal_id,
+            deal_role="ADMIN",
+            is_superuser=context.is_superuser,
+        )
+
+    # 3. For non-admin users, verify explicit DealMember assignment
     stmt = (
         select(DealMember)
         .where(
@@ -141,14 +157,6 @@ async def validate_deal_membership(
     deal_member = result.scalar_one_or_none()
 
     if not deal_member:
-        # Check if deal actually exists in this organization to return safe 403 vs 404
-        deal_stmt = select(Deal).where(
-            Deal.organization_id == context.organization_id,
-            Deal.id == deal_id,
-        )
-        deal_res = await db.execute(deal_stmt)
-        if not deal_res.scalar_one_or_none():
-            raise NotFoundException("Deal", deal_id)
         raise ForbiddenException("User is not an authorized team member for this deal workspace.")
 
     return TenantContext(

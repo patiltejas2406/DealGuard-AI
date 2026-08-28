@@ -899,6 +899,28 @@ export const api = {
   getMLModel: async (modelId: string): Promise<MLModelItem> => {
     return fetchJson<MLModelItem>(`/ml/models/${modelId}`);
   },
+
+  getModelMetrics: async (modelId: string): Promise<any> => {
+    return fetchJson<any>(`/ml/models/${modelId}/metrics`);
+  },
+
+  listTrainingRuns: async (): Promise<any[]> => {
+    return fetchJson<any[]>('/ml/training-runs');
+  },
+
+  getPredictionRecord: async (predictionId: string): Promise<any> => {
+    return fetchJson<any>(`/ml/predictions/${predictionId}`);
+  },
+
+  predictDealML: async (
+    dealId: string,
+    payload: { model_id: string; features_override?: Record<string, any> }
+  ): Promise<PredictionResultItem> => {
+    return fetchJson<PredictionResultItem>(`/deals/${dealId}/ml/predict`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 export interface AgentMetadataItem {
@@ -967,6 +989,45 @@ export interface MLModelItem {
   hyperparameters: Record<string, any>;
   evaluation_metrics: Record<string, number>;
   status: string;
+}
+
+export interface FeatureImportanceItem {
+  feature_name: string;
+  importance_score: number;
+  rank: number;
+  direction: string;
+}
+
+export interface SHAPValueItem {
+  feature_name: string;
+  base_value: number;
+  shap_value: number;
+  actual_value: any;
+}
+
+export interface XAIExplanationItem {
+  explanation_id: string;
+  prediction_id: string;
+  model_id: string;
+  method: string;
+  top_features: FeatureImportanceItem[];
+  shap_values?: SHAPValueItem[];
+  feature_snapshot: Record<string, any>;
+  narrative_summary: string;
+  generated_at: string;
+}
+
+export interface PredictionResultItem {
+  prediction_id: string;
+  model_id: string;
+  model_version: string;
+  task_type: string;
+  predicted_value: any;
+  probability_distribution?: Record<string, number>;
+  confidence_interval?: [number, number];
+  prediction_confidence: number;
+  explanation?: XAIExplanationItem;
+  created_at: string;
 }
 
 

@@ -28,6 +28,7 @@ import {
   AgentOrchestrationResultItem,
   MLModelItem,
   AgentAssessmentItem,
+  PredictionResultItem,
 } from '@/lib/api';
 import { Deal } from '@/types';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,8 @@ export default function AgentOrchestrationPage() {
   const [mlModels, setMlModels] = useState<MLModelItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [orchestrating, setOrchestrating] = useState<boolean>(false);
+  const [runningMLModelId, setRunningMLModelId] = useState<string | null>(null);
+  const [mlPredictionResult, setMlPredictionResult] = useState<PredictionResultItem | null>(null);
   const [orchestrationMode, setOrchestrationMode] = useState<string>('FULL_DEAL_DECISION');
   const [queryInput, setQueryInput] = useState<string>('');
   const [orchestrationResult, setOrchestrationResult] = useState<AgentOrchestrationResultItem | null>(null);
@@ -90,6 +93,24 @@ export default function AgentOrchestrationPage() {
       setError(err.message || 'Multi-agent orchestration execution failed.');
     } finally {
       setOrchestrating(false);
+    }
+  };
+
+  const handleRunMLPrediction = async (modelId: string) => {
+    if (!selectedDealId) {
+      setError('Please select an active deal to execute ML inference.');
+      return;
+    }
+
+    try {
+      setRunningMLModelId(modelId);
+      setError(null);
+      const res = await api.predictDealML(selectedDealId, { model_id: modelId });
+      setMlPredictionResult(res);
+    } catch (err: any) {
+      setError(err.message || `ML inference failed for model '${modelId}'.`);
+    } finally {
+      setRunningMLModelId(null);
     }
   };
 
@@ -521,65 +542,206 @@ export default function AgentOrchestrationPage() {
 
       {/* Tab Content: ML & XAI Foundation */}
       {activeTab === 'ml' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Cpu className="h-4 w-4 text-primary-400" />
-              Machine Learning Architecture & XAI Catalog
+              Machine Learning Predictive Intelligence & XAI Console
             </h3>
             <p className="text-xs text-gray-400">
-              Standardized ML prediction contracts, training lineage schemas, and SHAP-based explainability interfaces ready for validated models.
+              Empirical ML models trained with reproducible tabular pipelines, statistical baseline comparisons, and real TreeSHAP / LinearSHAP explainability.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mlModels.map((model) => (
-              <div
-                key={model.model_id}
-                className="rounded-xl border border-surface-border bg-surface-card p-5 space-y-3"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono font-semibold uppercase text-primary-400">
-                      {model.task_type}
-                    </span>
-                    <h4 className="text-sm font-bold text-white">{model.name}</h4>
-                  </div>
-                  <span className="rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold">
-                    {model.status}
+          {/* Active Prediction Result Card */}
+          {mlPredictionResult && (
+            <div className="rounded-xl border border-primary-500/30 bg-primary-950/10 p-5 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono font-semibold uppercase text-primary-400">
+                    Latest Inference Result &bull; {mlPredictionResult.task_type}
+                  </span>
+                  <h4 className="text-base font-bold text-white">Model: {mlPredictionResult.model_id}</h4>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono font-semibold text-emerald-400">
+                    {(mlPredictionResult.prediction_confidence * 100).toFixed(1)}% Confidence
                   </span>
                 </div>
+              </div>
 
-                <div className="text-[11px] text-gray-400 font-mono">
-                  Framework: <span className="text-white">{model.framework}</span> (v{model.version})
+              {/* Prediction Output & Probabilities */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-lg border border-surface-border bg-surface/50 p-3 space-y-1">
+                  <span className="text-[11px] text-gray-400 uppercase font-semibold">Predicted Value / Class</span>
+                  <div className="text-lg font-bold text-white font-mono">
+                    {typeof mlPredictionResult.predicted_value === 'number'
+                      ? mlPredictionResult.predicted_value.toLocaleString()
+                      : String(mlPredictionResult.predicted_value)}
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="text-[10px] font-semibold uppercase text-gray-500">Feature Names ({model.feature_names.length})</div>
-                  <div className="flex flex-wrap gap-1">
-                    {model.feature_names.slice(0, 4).map((f) => (
-                      <span key={f} className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono text-gray-300">
-                        {f}
-                      </span>
+                {mlPredictionResult.probability_distribution && (
+                  <div className="rounded-lg border border-surface-border bg-surface/50 p-3 space-y-1">
+                    <span className="text-[11px] text-gray-400 uppercase font-semibold">Probability Distribution</span>
+                    <div className="flex gap-3 text-xs font-mono text-gray-300">
+                      {Object.entries(mlPredictionResult.probability_distribution).map(([k, v]) => (
+                        <span key={k} className={v > 0.4 ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
+                          {k}: {(v * 100).toFixed(1)}%
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {mlPredictionResult.confidence_interval && (
+                  <div className="rounded-lg border border-surface-border bg-surface/50 p-3 space-y-1">
+                    <span className="text-[11px] text-gray-400 uppercase font-semibold">95% Uncertainty Interval</span>
+                    <div className="text-xs font-mono text-gray-300">
+                      [{mlPredictionResult.confidence_interval[0].toLocaleString()} &ndash; {mlPredictionResult.confidence_interval[1].toLocaleString()}]
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SHAP Feature Attribution Visualization */}
+              {mlPredictionResult.explanation && (
+                <div className="space-y-3 pt-3 border-t border-surface-border">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-primary-400" />
+                      Grounded SHAP Feature Attribution ({mlPredictionResult.explanation.method})
+                    </h5>
+                  </div>
+
+                  <p className="text-xs italic text-gray-300 bg-surface/40 p-3 rounded-lg border border-surface-border">
+                    &ldquo;{mlPredictionResult.explanation.narrative_summary}&rdquo;
+                  </p>
+
+                  <div className="space-y-2">
+                    {mlPredictionResult.explanation.top_features.map((feat) => (
+                      <div key={feat.feature_name} className="space-y-1">
+                        <div className="flex items-center justify-between text-[11px] font-mono">
+                          <span className="text-gray-300">{feat.feature_name}</span>
+                          <span className={feat.direction === 'POSITIVE' ? 'text-rose-400' : 'text-emerald-400'}>
+                            {feat.direction} ({feat.importance_score.toFixed(4)})
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-surface-border overflow-hidden">
+                          <div
+                            className={cn(
+                              'h-full rounded-full',
+                              feat.direction === 'POSITIVE' ? 'bg-rose-500' : 'bg-emerald-500'
+                            )}
+                            style={{ width: `${Math.min(100, feat.importance_score * 100)}%` }}
+                          />
+                        </div>
+                      </div>
                     ))}
-                    {model.feature_names.length > 4 && (
-                      <span className="text-[10px] text-gray-500 font-mono">+{model.feature_names.length - 4} more</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Model Catalog Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mlModels.map((model) => {
+              const isTrained = model.status === 'VALIDATED' || model.status === 'TRAINED' || Object.keys(model.evaluation_metrics).length > 0;
+              const isRunning = runningMLModelId === model.model_id;
+
+              return (
+                <div
+                  key={model.model_id}
+                  className="rounded-xl border border-surface-border bg-surface-card p-5 space-y-3 flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[10px] font-mono font-semibold uppercase text-primary-400">
+                          {model.task_type}
+                        </span>
+                        <h4 className="text-sm font-bold text-white">{model.name}</h4>
+                      </div>
+                      <span
+                        className={cn(
+                          'rounded px-2 py-0.5 text-[10px] font-semibold border',
+                          isTrained
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        )}
+                      >
+                        {isTrained ? 'TRAINED & VALIDATED' : 'DATASET REQUIRED'}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-gray-400 font-mono">
+                      Framework: <span className="text-white">{model.framework}</span> (v{model.version})
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-semibold uppercase text-gray-500">
+                        Feature Schema ({model.feature_names.length})
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {model.feature_names.slice(0, 4).map((f) => (
+                          <span key={f} className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono text-gray-300">
+                            {f}
+                          </span>
+                        ))}
+                        {model.feature_names.length > 4 && (
+                          <span className="text-[10px] text-gray-500 font-mono">+{model.feature_names.length - 4} more</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {isTrained ? (
+                      <div className="pt-2 border-t border-surface-border space-y-1 text-[11px] font-mono">
+                        <span className="text-gray-500 uppercase text-[10px] font-semibold">Test Evaluation Metrics:</span>
+                        <div className="flex flex-wrap gap-2 text-emerald-400 font-semibold">
+                          {Object.entries(model.evaluation_metrics).map(([k, v]) => (
+                            <span key={k} className="bg-surface px-1.5 py-0.5 rounded border border-surface-border">
+                              {k.toUpperCase()}: {typeof v === 'number' ? v.toFixed(3) : v}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="pt-2 border-t border-surface-border text-[11px] text-amber-400/80 italic">
+                        Specification initialized &bull; Awaiting customer historical accounting/telemetry dataset.
+                      </div>
                     )}
                   </div>
-                </div>
 
-                <div className="pt-2 border-t border-surface-border flex items-center justify-between text-[11px] font-mono text-gray-400">
-                  <span>Metrics:</span>
-                  <div className="flex gap-2 text-emerald-400 font-semibold">
-                    {Object.entries(model.evaluation_metrics).map(([k, v]) => (
-                      <span key={k}>
-                        {k.toUpperCase()}: {v}
-                      </span>
-                    ))}
-                  </div>
+                  {isTrained && (
+                    <div className="pt-3 border-t border-surface-border">
+                      <button
+                        onClick={() => handleRunMLPrediction(model.model_id)}
+                        disabled={isRunning || !selectedDealId}
+                        className={cn(
+                          'w-full inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors',
+                          isRunning
+                            ? 'bg-primary-500/50 text-white cursor-not-allowed'
+                            : 'bg-primary-600 text-white hover:bg-primary-500'
+                        )}
+                      >
+                        {isRunning ? (
+                          <>
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                            Executing ML Inference...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3 w-3" />
+                            Execute Deal Prediction & SHAP
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

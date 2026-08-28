@@ -1,13 +1,125 @@
-"""Registered ML Model Architectures & Initial Catalog."""
+"""Extended Model Registry — Active Trained Instances & Catalog Lifecycle."""
 
-from app.domains.ml.interfaces import ModelRegistry
-from app.domains.ml.schemas import ModelMetadata, ModelStatus, ModelTaskType
+from typing import Any, Dict, List, Optional
+from app.domains.ml.data_contracts import DatasetSnapshot
+from app.domains.ml.datasets.benchmark_datasets import (
+    generate_b2b_saas_churn_dataset,
+    generate_ebitda_realization_dataset,
+    generate_ma_deal_risk_dataset,
+)
+from app.domains.ml.pipeline import MLTrainingPipeline, TrainedModelWrapper
+from app.domains.ml.schemas import (
+    ModelMetadata,
+    ModelStatus,
+    ModelTaskType,
+    TrainingRun,
+)
 
 
-def initialize_standard_ml_catalog() -> None:
-    """Register standard machine learning model architecture definitions."""
+class ExtendedModelRegistry:
+    """
+    Production registry managing trained model instances, training runs,
+    and specification-only catalog entries.
+    """
 
-    catalog = [
+    _trained_models: Dict[str, TrainedModelWrapper] = {}
+    _metadata_catalog: Dict[str, ModelMetadata] = {}
+    _training_runs: Dict[str, TrainingRun] = {}
+    _dataset_snapshots: Dict[str, DatasetSnapshot] = {}
+
+    @classmethod
+    def register_trained_model(cls, wrapper: TrainedModelWrapper) -> None:
+        """Register an active trained model wrapper instance."""
+        meta = wrapper.metadata
+        cls._trained_models[meta.model_id] = wrapper
+        cls._metadata_catalog[meta.model_id] = meta
+        cls._training_runs[str(wrapper.training_run.run_id)] = wrapper.training_run
+
+    @classmethod
+    def register_specification_only(cls, metadata: ModelMetadata) -> None:
+        """Register a model specification that requires customer dataset ingestion."""
+        cls._metadata_catalog[metadata.model_id] = metadata
+
+    @classmethod
+    def register_dataset_snapshot(cls, snapshot: DatasetSnapshot) -> None:
+        """Store an immutable dataset snapshot."""
+        cls._dataset_snapshots[snapshot.metadata.dataset_id] = snapshot
+
+    @classmethod
+    def get_trained_model(cls, model_id: str) -> Optional[TrainedModelWrapper]:
+        """Retrieve an active trained model wrapper."""
+        return cls._trained_models.get(model_id)
+
+    @classmethod
+    def get_metadata(cls, model_id: str) -> Optional[ModelMetadata]:
+        """Retrieve model metadata by ID."""
+        return cls._metadata_catalog.get(model_id)
+
+    @classmethod
+    def list_all_models(cls) -> List[ModelMetadata]:
+        """List metadata for all models in catalog."""
+        return list(cls._metadata_catalog.values())
+
+    @classmethod
+    def list_training_runs(cls) -> List[TrainingRun]:
+        """List all training runs."""
+        return list(cls._training_runs.values())
+
+    @classmethod
+    def get_dataset_snapshot(cls, dataset_id: str) -> Optional[DatasetSnapshot]:
+        """Retrieve dataset snapshot by ID."""
+        return cls._dataset_snapshots.get(dataset_id)
+
+
+def initialize_and_train_production_models() -> None:
+    """
+    Train and register empirical production models for benchmark-supported targets,
+    and register clean specification metadata for dataset-required targets.
+    """
+    # 1. Train Enterprise SaaS Churn Model (REAL TRAINED MODEL)
+    df_churn, snap_churn = generate_b2b_saas_churn_dataset(n_samples=600, random_state=42)
+    ExtendedModelRegistry.register_dataset_snapshot(snap_churn)
+
+    churn_wrapper = MLTrainingPipeline.train_and_select(
+        snapshot=snap_churn,
+        model_id="dealguard-customer-churn-v1",
+        model_name="Enterprise Customer Churn Probability Classifier",
+        task_type=ModelTaskType.CHURN_PREDICTION,
+        framework_preference="xgboost",
+        random_state=42,
+    )
+    ExtendedModelRegistry.register_trained_model(churn_wrapper)
+
+    # 2. Train 17-Pillar Deal Downside Risk Probability Model (REAL TRAINED MODEL)
+    df_risk, snap_risk = generate_ma_deal_risk_dataset(n_samples=500, random_state=42)
+    ExtendedModelRegistry.register_dataset_snapshot(snap_risk)
+
+    risk_wrapper = MLTrainingPipeline.train_and_select(
+        snapshot=snap_risk,
+        model_id="dealguard-risk-probability-v1",
+        model_name="17-Pillar Deal Downside Risk Probability Model",
+        task_type=ModelTaskType.RISK_PROBABILITY,
+        framework_preference="xgboost",
+        random_state=42,
+    )
+    ExtendedModelRegistry.register_trained_model(risk_wrapper)
+
+    # 3. Train Post-Deal EBITDA Realization Predictor (REAL TRAINED MODEL)
+    df_ebitda, snap_ebitda = generate_ebitda_realization_dataset(n_samples=500, random_state=42)
+    ExtendedModelRegistry.register_dataset_snapshot(snap_ebitda)
+
+    ebitda_wrapper = MLTrainingPipeline.train_and_select(
+        snapshot=snap_ebitda,
+        model_id="dealguard-ebitda-qoe-v1",
+        model_name="Normalized EBITDA & QoE Realization Predictor",
+        task_type=ModelTaskType.EBITDA_FORECAST,
+        framework_preference="xgboost",
+        random_state=42,
+    )
+    ExtendedModelRegistry.register_trained_model(ebitda_wrapper)
+
+    # 4. Specification-Only Models (Clearly flagged as REGISTERED / DATASET_REQUIRED without fake training)
+    spec_models = [
         ModelMetadata(
             model_id="dealguard-revenue-forecast-v1",
             name="Institutional ARR & Revenue Time-Series Forecaster",
@@ -21,59 +133,8 @@ def initialize_standard_ml_catalog() -> None:
                 "customer_concentration_top3_pct",
                 "gross_margin_pct",
             ],
-            hyperparameters={"n_estimators": 200, "max_depth": 5, "learning_rate": 0.05},
-            evaluation_metrics={"rmse": 0.042, "r2": 0.941, "mae": 0.031},
-            status=ModelStatus.REGISTERED,
-        ),
-        ModelMetadata(
-            model_id="dealguard-ebitda-qoe-v1",
-            name="Normalized EBITDA & QoE Realization Predictor",
-            version="1.0.0",
-            task_type=ModelTaskType.EBITDA_FORECAST,
-            framework="scikit-learn",
-            feature_names=[
-                "reported_ebitda_usd",
-                "qoe_add_backs_ratio",
-                "one_time_legal_expenses",
-                "headcount_runrate_cost",
-                "cloud_hosting_spend",
-            ],
-            hyperparameters={"alpha": 0.1, "fit_intercept": True},
-            evaluation_metrics={"rmse": 0.055, "r2": 0.912},
-            status=ModelStatus.REGISTERED,
-        ),
-        ModelMetadata(
-            model_id="dealguard-customer-churn-v1",
-            name="Enterprise Customer Churn Probability Classifier",
-            version="1.0.0",
-            task_type=ModelTaskType.CHURN_PREDICTION,
-            framework="xgboost",
-            feature_names=[
-                "account_age_months",
-                "support_tickets_p1_count",
-                "license_utilization_rate",
-                "exec_sponsor_turnover",
-                "nps_sentiment_score",
-            ],
-            hyperparameters={"scale_pos_weight": 3.2, "max_depth": 4},
-            evaluation_metrics={"auc_roc": 0.892, "f1_score": 0.841},
-            status=ModelStatus.REGISTERED,
-        ),
-        ModelMetadata(
-            model_id="dealguard-risk-probability-v1",
-            name="17-Pillar Deal Downside Risk Probability Model",
-            version="1.0.0",
-            task_type=ModelTaskType.RISK_PROBABILITY,
-            framework="lightgbm",
-            feature_names=[
-                "cybersecurity_score",
-                "customer_concentration_pct",
-                "key_person_dependencies",
-                "contract_var_ratio",
-                "compliance_violations_count",
-            ],
-            hyperparameters={"num_leaves": 31, "learning_rate": 0.03},
-            evaluation_metrics={"auc_roc": 0.925, "brier_score": 0.082},
+            hyperparameters={"status": "AWAITING_TIME_SERIES_ACCOUNTING_DATASET"},
+            evaluation_metrics={},
             status=ModelStatus.REGISTERED,
         ),
         ModelMetadata(
@@ -89,8 +150,8 @@ def initialize_standard_ml_catalog() -> None:
                 "executive_retention_pct",
                 "workstream_dependencies_count",
             ],
-            hyperparameters={"penalty": "l2", "C": 1.0},
-            evaluation_metrics={"auc_roc": 0.878, "f1_score": 0.815},
+            hyperparameters={"status": "AWAITING_PMO_MILESTONE_LOGS"},
+            evaluation_metrics={},
             status=ModelStatus.REGISTERED,
         ),
         ModelMetadata(
@@ -105,8 +166,8 @@ def initialize_standard_ml_catalog() -> None:
                 "sales_team_quota_headcount",
                 "integration_health_score",
             ],
-            hyperparameters={"alpha": 0.01},
-            evaluation_metrics={"r2": 0.884, "mae": 0.062},
+            hyperparameters={"status": "AWAITING_ERP_REALIZATION_LOGS"},
+            evaluation_metrics={},
             status=ModelStatus.REGISTERED,
         ),
         ModelMetadata(
@@ -122,15 +183,19 @@ def initialize_standard_ml_catalog() -> None:
                 "debt_covenant_headroom_ratio",
                 "customer_nps",
             ],
-            hyperparameters={"max_depth": 6, "learning_rate": 0.04},
-            evaluation_metrics={"auc_roc": 0.931, "f1_score": 0.889},
+            hyperparameters={"status": "AWAITING_BOARD_TELEMETRY_LOGS"},
+            evaluation_metrics={},
             status=ModelStatus.REGISTERED,
         ),
     ]
 
-    for model_meta in catalog:
-        ModelRegistry.register_metadata_only(model_meta)
+    for sm in spec_models:
+        ExtendedModelRegistry.register_specification_only(sm)
 
 
-# Auto-initialize catalog on import
-initialize_standard_ml_catalog()
+# Initialize and train on module load
+initialize_and_production_models = initialize_and_train_production_models
+initialize_and_train_production_models()
+
+# Export alias for compatibility
+ModelRegistry = ExtendedModelRegistry
