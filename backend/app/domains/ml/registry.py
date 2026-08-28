@@ -119,9 +119,9 @@ def initialize_and_train_production_models() -> None:
     except Exception as e:
         print(f"Warning: could not train dealguard-real-credit-risk-v1: {e}")
 
-    # 3. Real-World Commercial Loan Default (U.S. SBA, N=10,000)
+    # 3. Real-World Commercial Loan Default (U.S. SBA, N=2,500 Stratified Calibration)
     try:
-        df_real_sba, snap_real_sba = load_real_commercial_loan_default_dataset()
+        df_real_sba, snap_real_sba = load_real_commercial_loan_default_dataset(max_samples=2500)
         ExtendedModelRegistry.register_dataset_snapshot(snap_real_sba)
         real_sba_wrapper, _ = RealWorldBenchmarkEngine.benchmark_and_train_target(
             snapshot=snap_real_sba,
