@@ -1,4 +1,4 @@
-"""Empirical Benchmark Datasets for Model Validation & Reproducible Training."""
+"""Synthetic Benchmark Datasets for Model Pipeline Validation & Reproducible Training."""
 
 import hashlib
 import json
@@ -25,9 +25,9 @@ def _compute_checksum(df: pd.DataFrame) -> str:
 
 def generate_b2b_saas_churn_dataset(n_samples: int = 600, random_state: int = 42) -> Tuple[pd.DataFrame, DatasetSnapshot]:
     """
-    Generate an empirical enterprise B2B SaaS customer churn dataset.
-    Reflects non-linear relations between contract duration, license utilization,
-    executive turnover, and support friction.
+    Generate a Synthetic Benchmark Dataset for enterprise B2B SaaS customer churn.
+    Used exclusively for deterministic ML pipeline validation, anti-leakage verification,
+    and end-to-end integration testing. (Not real historical customer data).
     """
     rng = np.random.default_rng(random_state)
 
@@ -91,8 +91,8 @@ def generate_b2b_saas_churn_dataset(n_samples: int = 600, random_state: int = 42
     metadata = DatasetMetadata(
         dataset_id="dealguard-dataset-churn-v1",
         version="1.0.0",
-        name="Enterprise B2B SaaS Churn Benchmark Dataset",
-        source="Empirical Corporate Finance Benchmark",
+        name="Synthetic Benchmark — Enterprise B2B SaaS Churn Dataset",
+        source="Synthetic Benchmark Data (Parametric Simulation for Pipeline Validation)",
         task_type="CHURN_PREDICTION",
         target_name="churned",
         row_count=n_samples,
@@ -100,7 +100,8 @@ def generate_b2b_saas_churn_dataset(n_samples: int = 600, random_state: int = 42
         split_method=SplitMethod.STRATIFIED,
         data_checksum=checksum,
         is_benchmark=True,
-        leakage_notes="Synthesized from empirical SaaS operational cohort distributions with deterministic seed.",
+        is_synthetic=True,
+        leakage_notes="Synthetic benchmark dataset generated with fixed PRNG seed for deterministic validation. Not real customer data.",
     )
 
     snapshot = DatasetSnapshot(
@@ -116,7 +117,9 @@ def generate_b2b_saas_churn_dataset(n_samples: int = 600, random_state: int = 42
 
 def generate_ma_deal_risk_dataset(n_samples: int = 500, random_state: int = 42) -> Tuple[pd.DataFrame, DatasetSnapshot]:
     """
-    Generate an empirical M&A 17-pillar downside risk probability dataset.
+    Generate a Synthetic Benchmark Dataset for M&A 17-pillar downside risk probability.
+    Used exclusively for deterministic ML pipeline validation, anti-leakage verification,
+    and end-to-end integration testing. (Not real historical customer data).
     """
     rng = np.random.default_rng(random_state)
 
@@ -183,8 +186,8 @@ def generate_ma_deal_risk_dataset(n_samples: int = 500, random_state: int = 42) 
     metadata = DatasetMetadata(
         dataset_id="dealguard-dataset-risk-v1",
         version="1.0.0",
-        name="M&A Deal Downside Risk Benchmark Dataset",
-        source="Empirical Buyout Risk Benchmark",
+        name="Synthetic Benchmark — M&A Deal Downside Risk Benchmark Dataset",
+        source="Synthetic Benchmark Data (Parametric Simulation for Pipeline Validation)",
         task_type="RISK_PROBABILITY",
         target_name="downside_risk_event",
         row_count=n_samples,
@@ -192,6 +195,8 @@ def generate_ma_deal_risk_dataset(n_samples: int = 500, random_state: int = 42) 
         split_method=SplitMethod.STRATIFIED,
         data_checksum=checksum,
         is_benchmark=True,
+        is_synthetic=True,
+        leakage_notes="Synthetic benchmark dataset generated with fixed PRNG seed for deterministic validation. Not real customer data.",
     )
 
     snapshot = DatasetSnapshot(
@@ -207,9 +212,9 @@ def generate_ma_deal_risk_dataset(n_samples: int = 500, random_state: int = 42) 
 
 def generate_ebitda_realization_dataset(n_samples: int = 500, random_state: int = 42) -> Tuple[pd.DataFrame, DatasetSnapshot]:
     """
-    Generate an empirical EBITDA realization regression dataset.
-    Models normalized EBITDA realization factoring in QoE quality, non-recurring expenses,
-    and headcount run-rate adjustments.
+    Generate a Synthetic Benchmark Dataset for EBITDA realization regression.
+    Used exclusively for deterministic ML pipeline validation, anti-leakage verification,
+    and end-to-end integration testing. (Not real historical customer data).
     """
     rng = np.random.default_rng(random_state)
 
@@ -265,8 +270,8 @@ def generate_ebitda_realization_dataset(n_samples: int = 500, random_state: int 
     metadata = DatasetMetadata(
         dataset_id="dealguard-dataset-ebitda-v1",
         version="1.0.0",
-        name="Post-Deal EBITDA Realization Benchmark Dataset",
-        source="Empirical Financial Model Benchmark",
+        name="Synthetic Benchmark — Post-Deal EBITDA Realization Benchmark Dataset",
+        source="Synthetic Benchmark Data (Parametric Simulation for Pipeline Validation)",
         task_type="EBITDA_FORECAST",
         target_name="realized_ebitda_post_close_usd",
         row_count=n_samples,
@@ -274,6 +279,8 @@ def generate_ebitda_realization_dataset(n_samples: int = 500, random_state: int 
         split_method=SplitMethod.RANDOM,
         data_checksum=checksum,
         is_benchmark=True,
+        is_synthetic=True,
+        leakage_notes="Synthetic benchmark dataset generated with fixed PRNG seed for deterministic validation. Not real customer data.",
     )
 
     snapshot = DatasetSnapshot(

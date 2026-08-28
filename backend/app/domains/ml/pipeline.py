@@ -6,9 +6,15 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    GradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from xgboost import XGBClassifier, XGBRegressor
 
 from app.domains.ml.data_contracts import (
@@ -189,8 +195,10 @@ class MLTrainingPipeline:
 
         if is_classification:
             candidates = [
-                ("LogisticRegression", LogisticRegression(penalty="l2", C=1.0, max_iter=500, random_state=random_state)),
+                ("LogisticRegression", LogisticRegression(penalty="l2", C=1.0, solver="liblinear", random_state=random_state)),
+                ("DecisionTree", DecisionTreeClassifier(max_depth=4, random_state=random_state)),
                 ("RandomForest", RandomForestClassifier(n_estimators=100, max_depth=5, random_state=random_state)),
+                ("GradientBoosting", GradientBoostingClassifier(n_estimators=80, max_depth=3, learning_rate=0.05, random_state=random_state)),
                 ("XGBoost", XGBClassifier(n_estimators=80, max_depth=4, learning_rate=0.05, eval_metric="logloss", random_state=random_state)),
             ]
             for c_name, c_model in candidates:
@@ -203,7 +211,9 @@ class MLTrainingPipeline:
         else:
             candidates = [
                 ("Ridge", Ridge(alpha=1.0, random_state=random_state)),
+                ("DecisionTree", DecisionTreeRegressor(max_depth=4, random_state=random_state)),
                 ("RandomForest", RandomForestRegressor(n_estimators=100, max_depth=5, random_state=random_state)),
+                ("GradientBoosting", GradientBoostingRegressor(n_estimators=80, max_depth=3, learning_rate=0.05, random_state=random_state)),
                 ("XGBoost", XGBRegressor(n_estimators=80, max_depth=4, learning_rate=0.05, random_state=random_state)),
             ]
             for c_name, c_model in candidates:
@@ -231,7 +241,7 @@ class MLTrainingPipeline:
             )
 
         # 7. Initialize Real SHAP Explainer on Training Fold Background
-        is_tree = best_name in ["XGBoost", "RandomForest"]
+        is_tree = best_name in ["XGBoost", "RandomForest", "GradientBoosting", "DecisionTree"]
         xai_engine = XAIEngine(
             model=best_model,
             feature_names=preprocessor.feature_names,

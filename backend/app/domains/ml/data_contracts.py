@@ -74,6 +74,7 @@ class DatasetMetadata(BaseModel):
     test_ratio: float = 0.15
     data_checksum: str
     is_benchmark: bool = False
+    is_synthetic: bool = False
     created_at: datetime = Field(default_factory=utc_now)
     leakage_notes: Optional[str] = None
 
