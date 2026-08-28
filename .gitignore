@@ -36,3 +36,6 @@ htmlcov/
 *.log*.tsbuildinfo
 data/vault/
 frontend/tsconfig.tsbuildinfo
+*.db
+*.sqlite
+*.sqlite3

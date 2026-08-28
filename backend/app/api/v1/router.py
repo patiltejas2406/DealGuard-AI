@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
     auth,
+    agents,
     copilot,
     decision,
     deals,
@@ -12,6 +13,7 @@ from app.api.v1.endpoints import (
     integration,
     jobs,
     legal,
+    ml,
     organizations,
     risk,
     scenarios,
@@ -45,6 +47,8 @@ api_router.include_router(integration.router)
 api_router.include_router(legal.router)
 api_router.include_router(technology.router)
 api_router.include_router(copilot.router)
+api_router.include_router(agents.router)
+api_router.include_router(ml.router)
 
 
 

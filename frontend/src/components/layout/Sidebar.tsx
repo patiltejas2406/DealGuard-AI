@@ -17,6 +17,7 @@ import {
   Layers,
   FileCheck2,
   Terminal,
+  Network,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { name: 'Data Room & Deals', icon: Briefcase, href: '/' },
+  { name: 'Agent Orchestrator', icon: Network, href: '/agents', badge: 'Multi-Agent' },
   { name: '3-Statements & QoE', icon: TrendingUp, href: '/financials', badge: 'Deterministic' },
   { name: 'Valuation Lab', icon: Layers, href: '/valuation', badge: 'Multi-Method' },
   { name: 'Risk Intelligence', icon: AlertTriangle, href: '/risks', badge: '17 Pillars' },

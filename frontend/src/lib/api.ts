@@ -852,7 +852,122 @@ export const api = {
       }
     }
   },
+
+  // Agentic Intelligence Orchestration API
+  listAgents: async (): Promise<AgentMetadataItem[]> => {
+    return fetchJson<AgentMetadataItem[]>('/agents');
+  },
+
+  getAgentMetadata: async (agentId: string): Promise<AgentMetadataItem> => {
+    return fetchJson<AgentMetadataItem>(`/agents/${agentId}`);
+  },
+
+  orchestrateAgents: async (
+    dealId: string,
+    payload: { orchestration_mode?: string; query?: string; target_agent_ids?: string[] }
+  ): Promise<AgentOrchestrationResultItem> => {
+    return fetchJson<AgentOrchestrationResultItem>(`/deals/${dealId}/agents/orchestrate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  runStandaloneAgent: async (
+    dealId: string,
+    agentId: string,
+    payload?: { query?: string }
+  ): Promise<AgentAssessmentItem> => {
+    return fetchJson<AgentAssessmentItem>(`/deals/${dealId}/agents/${agentId}/run`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    });
+  },
+
+  listAgentExecutions: async (dealId: string): Promise<any[]> => {
+    return fetchJson<any[]>(`/deals/${dealId}/agents/executions`);
+  },
+
+  getAgentExecutionDetails: async (dealId: string, executionId: string): Promise<any> => {
+    return fetchJson<any>(`/deals/${dealId}/agents/executions/${executionId}`);
+  },
+
+  // Machine Learning Foundation & XAI Catalog
+  listMLModels: async (): Promise<MLModelItem[]> => {
+    return fetchJson<MLModelItem[]>('/ml/models');
+  },
+
+  getMLModel: async (modelId: string): Promise<MLModelItem> => {
+    return fetchJson<MLModelItem>(`/ml/models/${modelId}`);
+  },
 };
+
+export interface AgentMetadataItem {
+  agent_id: string;
+  name: string;
+  version: string;
+  purpose: string;
+  domain: string;
+  lifecycle_phase: string;
+  allowed_tools: string[];
+  evidence_requirements: string[];
+  confidence_policy: string;
+}
+
+export interface AgentAssessmentItem {
+  agent_id: string;
+  domain: string;
+  status: string;
+  summary: string;
+  confidence: string;
+  confidence_score: number;
+  key_findings: any[];
+  positive_drivers?: string[];
+  negative_drivers?: string[];
+  citations: CopilotCitation[];
+  tools_invoked: string[];
+  execution_time_ms: number;
+  deterministic_references?: Record<string, any>;
+  [key: string]: any;
+}
+
+export interface DecisionAssessmentItem {
+  recommendation: 'BUY' | 'BUY_WITH_CONDITIONS' | 'RENEGOTIATE' | 'HOLD' | 'AVOID' | 'INSUFFICIENT_EVIDENCE';
+  confidence: string;
+  confidence_score: number;
+  deterministic_decision_score: number | null;
+  positive_drivers: string[];
+  negative_drivers: string[];
+  unresolved_issues: string[];
+  required_diligence_items: string[];
+  executive_rationale: string;
+  citations: CopilotCitation[];
+  human_review_required: boolean;
+  escalation_reasons: string[];
+  recommended_human_action: string | null;
+}
+
+export interface AgentOrchestrationResultItem {
+  execution_id: string;
+  deal_id: string;
+  orchestration_mode: string;
+  selected_agents: string[];
+  specialist_assessments: Record<string, AgentAssessmentItem>;
+  decision_assessment: DecisionAssessmentItem;
+  total_duration_ms: number;
+}
+
+export interface MLModelItem {
+  model_id: string;
+  name: string;
+  version: string;
+  task_type: string;
+  framework: string;
+  training_dataset_id?: string;
+  feature_names: string[];
+  hyperparameters: Record<string, any>;
+  evaluation_metrics: Record<string, number>;
+  status: string;
+}
 
 
 

@@ -41,6 +41,8 @@ from app.domains.copilot.models import (
 )
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.jobs.models import JobExecution
+from app.domains.agents.models import AgentExecution, AgentAssessmentRecord
+from app.domains.ml.models import MLModelRecord, MLPredictionRecord
 
 __all__ = [
     "Base",
@@ -90,6 +92,10 @@ __all__ = [
     "AuditEvent",
     "HumanReview",
     "JobExecution",
+    "AgentExecution",
+    "AgentAssessmentRecord",
+    "MLModelRecord",
+    "MLPredictionRecord",
 ]
 
 
