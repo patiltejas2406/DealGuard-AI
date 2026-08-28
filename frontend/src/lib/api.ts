@@ -29,6 +29,7 @@ import {
   ValuationSummaryItem,
   ValuationValidationItem,
   WaccAnalysisItem,
+  CopilotCitation,
 } from '@/types';
 
 
@@ -743,6 +744,114 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  streamCopilot: async (
+    dealId: string,
+    payload: { conversation_id?: string; message: string },
+    callbacks: {
+      onDomain?: (domain: string) => void;
+      onToken?: (token: string) => void;
+      onCitation?: (citation: CopilotCitation) => void;
+      onDone?: (data: any) => void;
+      onError?: (error: Error) => void;
+    }
+  ): Promise<void> => {
+    const baseUrl = getApiBaseUrl();
+    const url = `${baseUrl}/deals/${dealId}/copilot/stream`;
+
+    tokenStore.init();
+    const token = tokenStore.getAccessToken();
+    const orgId = tokenStore.getOrgId();
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (orgId) headers['X-Organization-ID'] = orgId;
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        let errMsg = `Streaming request failed with status ${res.status}`;
+        try {
+          const json = await res.json();
+          if (json.error?.message) {
+            errMsg = json.error.message;
+          } else if (json.detail) {
+            errMsg = typeof json.detail === 'string' ? json.detail : JSON.stringify(json.detail);
+          }
+        } catch {
+          // Fallback to generic message
+        }
+        throw new ApiError(res.status, 'STREAM_ERROR', errMsg);
+      }
+
+      if (!res.body) {
+        throw new ApiError(500, 'STREAM_ERROR', 'Streaming response body is null');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data: ')) {
+            const dataStr = trimmed.slice(6);
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.event === 'domain' && callbacks.onDomain) {
+                callbacks.onDomain(parsed.data);
+              } else if (parsed.event === 'token' && callbacks.onToken) {
+                callbacks.onToken(parsed.data);
+              } else if (parsed.event === 'citation' && callbacks.onCitation) {
+                callbacks.onCitation(parsed.data);
+              } else if (parsed.event === 'done' && callbacks.onDone) {
+                callbacks.onDone(parsed.data);
+              } else if (parsed.event === 'error' && callbacks.onError) {
+                callbacks.onError(new Error(typeof parsed.data === 'string' ? parsed.data : JSON.stringify(parsed.data)));
+              }
+            } catch {
+              // Ignore partial JSON parse errors
+            }
+          }
+        }
+      }
+
+      if (buffer.trim().startsWith('data: ')) {
+        const dataStr = buffer.trim().slice(6);
+        try {
+          const parsed = JSON.parse(dataStr);
+          if (parsed.event === 'done' && callbacks.onDone) {
+            callbacks.onDone(parsed.data);
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    } catch (err: any) {
+      if (callbacks.onError) {
+        callbacks.onError(err instanceof Error ? err : new Error(String(err)));
+      } else {
+        throw err;
+      }
+    }
+  },
 };
 
 

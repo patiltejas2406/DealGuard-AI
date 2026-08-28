@@ -302,3 +302,61 @@ async def test_copilot_tenant_isolation(seed_copilot_env, async_client: AsyncCli
         json={"message": "Show me secrets"},
     )
     assert query_res.status_code in [401, 403, 404]
+
+
+@pytest.mark.asyncio
+async def test_copilot_streaming_persistence_and_audit(seed_copilot_env, async_client: AsyncClient, db_session: AsyncSession):
+    """Verify SSE streaming creates conversation, persists user & assistant messages, and logs audit events."""
+    from sqlalchemy import select
+    from app.domains.audit.models import AuditEvent
+    from app.domains.copilot.models import CopilotConversation, CopilotMessage
+
+    env = seed_copilot_env
+    deal_id = env["deal"].id
+    headers = env["headers"]
+
+    # Stream query without conversation_id -> creates new conversation & persists messages
+    stream_res = await async_client.post(
+        f"/api/v1/deals/{deal_id}/copilot/stream",
+        headers=headers,
+        json={"message": "Why is this deal risky?"},
+    )
+    assert stream_res.status_code == 200
+    body = stream_res.text
+    assert "data: " in body
+    assert '"event": "done"' in body
+
+    # Extract done payload data
+    done_line = [line for line in body.split("\n") if '"event": "done"' in line][0]
+    done_json = json.loads(done_line.replace("data: ", ""))
+    data = done_json["data"]
+    assert "conversation_id" in data
+    assert "user_message_id" in data
+    assert "assistant_message_id" in data
+    conv_id = data["conversation_id"]
+
+    # Verify conversation and messages in database
+    conv_res = await async_client.get(
+        f"/api/v1/deals/{deal_id}/copilot/conversations/{conv_id}",
+        headers=headers,
+    )
+    assert conv_res.status_code == 200
+    conv_data = conv_res.json()
+    assert len(conv_data["messages"]) == 2
+    assert conv_data["messages"][0]["role"] == "user"
+    assert conv_data["messages"][0]["content"] == "Why is this deal risky?"
+    assert conv_data["messages"][1]["role"] == "assistant"
+    assert "Evidence-Backed Risk Analysis" in conv_data["messages"][1]["content"]
+
+    # Verify AuditEvent was committed
+    audit_q = select(AuditEvent).where(
+        AuditEvent.deal_id == deal_id,
+        AuditEvent.action == "COPILOT_QUERY_STREAMED",
+        AuditEvent.entity_id == uuid.UUID(conv_id),
+    )
+    audit_res = await db_session.execute(audit_q)
+    audit_event = audit_res.scalar_one_or_none()
+    assert audit_event is not None
+    assert audit_event.entity_type == "CopilotConversation"
+    assert audit_event.actor_user_id == env["user"].id
+

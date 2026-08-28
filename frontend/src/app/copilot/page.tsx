@@ -154,12 +154,15 @@ export default function CopilotPage() {
     }
   }
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   // 5. Send Message & Stream Response
   async function handleSendMessage(queryOverride?: string) {
     const query = queryOverride || inputQuery;
     if (!query.trim() || !selectedDealId || isProcessing) return;
 
     setInputQuery('');
+    setErrorMessage(null);
     setIsProcessing(true);
     setStreamingText('');
     setStreamingDomains([]);
@@ -167,7 +170,7 @@ export default function CopilotPage() {
 
     // Optimistic user message
     const tempUserMsg: CopilotMessageResponse = {
-      id: `temp-${Date.now()}`,
+      id: `temp-user-${Date.now()}`,
       deal_id: selectedDealId,
       conversation_id: activeConversationId || 'temp',
       role: 'user',
@@ -180,27 +183,132 @@ export default function CopilotPage() {
     };
     setMessages((prev) => [...prev, tempUserMsg]);
 
+    let accumulatedText = '';
+    let accumulatedDomains: string[] = [];
+    let accumulatedCitations: CopilotCitation[] = [];
+    let hasStreamCompleted = false;
+
     try {
-      const res = await api.queryCopilot(selectedDealId, {
-        conversation_id: activeConversationId || undefined,
-        message: query,
-      });
+      // Attempt SSE streaming first
+      await api.streamCopilot(
+        selectedDealId,
+        {
+          conversation_id: activeConversationId || undefined,
+          message: query,
+        },
+        {
+          onDomain: (domain: string) => {
+            if (!accumulatedDomains.includes(domain)) {
+              accumulatedDomains = [...accumulatedDomains, domain];
+              setStreamingDomains(accumulatedDomains);
+            }
+          },
+          onToken: (token: string) => {
+            accumulatedText += token;
+            setStreamingText(accumulatedText);
+          },
+          onCitation: (citation: CopilotCitation) => {
+            accumulatedCitations = [...accumulatedCitations, citation];
+            setStreamingCitations(accumulatedCitations);
+          },
+          onDone: (doneData: any) => {
+            hasStreamCompleted = true;
+            const convId = doneData.conversation_id || activeConversationId;
+            if (convId && !activeConversationId) {
+              setActiveConversationId(convId);
+              loadConversations(selectedDealId);
+            }
 
-      if (!activeConversationId) {
-        setActiveConversationId(res.conversation_id);
-        loadConversations(selectedDealId);
+            const finalUserMsg: CopilotMessageResponse = {
+              ...tempUserMsg,
+              id: doneData.user_message_id || tempUserMsg.id,
+              conversation_id: convId || tempUserMsg.conversation_id,
+            };
+
+            const finalAssistantMsg: CopilotMessageResponse = {
+              id: doneData.assistant_message_id || doneData.message_id || `temp-assistant-${Date.now()}`,
+              deal_id: selectedDealId,
+              conversation_id: convId || 'temp',
+              role: 'assistant',
+              content: doneData.content || accumulatedText,
+              citations: doneData.citations || accumulatedCitations,
+              confidence: doneData.confidence || 'HIGH',
+              retrieved_domains: doneData.retrieved_domains || accumulatedDomains,
+              metadata_payload: {},
+              created_at: doneData.created_at || new Date().toISOString(),
+            };
+
+            setMessages((prev) => [
+              ...prev.filter((m) => m.id !== tempUserMsg.id),
+              finalUserMsg,
+              finalAssistantMsg,
+            ]);
+            setStreamingText('');
+            setStreamingDomains([]);
+            setStreamingCitations([]);
+            setIsProcessing(false);
+          },
+          onError: async (err: Error) => {
+            console.warn('SSE streaming encountered an issue, falling back to standard query:', err);
+            // Graceful fallback to queryCopilot
+            try {
+              const fallbackRes = await api.queryCopilot(selectedDealId, {
+                conversation_id: activeConversationId || undefined,
+                message: query,
+              });
+
+              if (!activeConversationId) {
+                setActiveConversationId(fallbackRes.conversation_id);
+                loadConversations(selectedDealId);
+              }
+
+              setMessages((prev) => [
+                ...prev.filter((m) => m.id !== tempUserMsg.id),
+                fallbackRes.user_message,
+                fallbackRes.assistant_message,
+              ]);
+            } catch (fallbackErr: any) {
+              console.error('Copilot query error:', fallbackErr);
+              setErrorMessage(fallbackErr?.message || 'Failed to process copilot query.');
+            } finally {
+              setIsProcessing(false);
+              setStreamingText('');
+              setStreamingDomains([]);
+              setStreamingCitations([]);
+            }
+          },
+        }
+      );
+    } catch (err: any) {
+      if (!hasStreamCompleted) {
+        console.error('Failed to initiate copilot streaming:', err);
+        // Fallback to standard query
+        try {
+          const res = await api.queryCopilot(selectedDealId, {
+            conversation_id: activeConversationId || undefined,
+            message: query,
+          });
+
+          if (!activeConversationId) {
+            setActiveConversationId(res.conversation_id);
+            loadConversations(selectedDealId);
+          }
+
+          setMessages((prev) => [
+            ...prev.filter((m) => m.id !== tempUserMsg.id),
+            res.user_message,
+            res.assistant_message,
+          ]);
+        } catch (fallbackErr: any) {
+          console.error('Copilot fallback failed:', fallbackErr);
+          setErrorMessage(fallbackErr?.message || 'Failed to connect to Copilot intelligence engine.');
+        } finally {
+          setIsProcessing(false);
+          setStreamingText('');
+          setStreamingDomains([]);
+          setStreamingCitations([]);
+        }
       }
-
-      setMessages((prev) => [
-        ...prev.filter((m) => m.id !== tempUserMsg.id),
-        res.user_message,
-        res.assistant_message,
-      ]);
-    } catch (err) {
-      console.error('Failed to process copilot query:', err);
-    } finally {
-      setIsProcessing(false);
-      setStreamingText('');
     }
   }
 
@@ -387,11 +495,84 @@ export default function CopilotPage() {
             </div>
           ))}
 
-          {/* Processing Indicator */}
+          {/* Active Streaming Assistant Message */}
           {isProcessing && (
-            <div className="flex items-center gap-2 text-xs text-emerald-400 p-3">
-              <Sparkles className="w-4 h-4 animate-spin" />
-              <span>Synthesizing multi-domain data room records...</span>
+            <div className="flex flex-col items-start animate-fadeIn">
+              <div className="max-w-2xl rounded-2xl rounded-bl-none p-4 space-y-2.5 bg-slate-950 border border-emerald-500/40 text-slate-200 shadow-lg">
+                {/* Assistant Header Badge */}
+                <div className="flex items-center justify-between pb-1 border-b border-slate-800/80 text-[10px]">
+                  <div className="flex items-center gap-1.5">
+                    <Bot className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                    <span className="font-bold text-white">DealGuard AI</span>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold animate-pulse">
+                      Streaming
+                    </span>
+                    {streamingDomains.map((d) => (
+                      <Badge key={d} variant="info" size="sm">{d}</Badge>
+                    ))}
+                  </div>
+                  <span className="text-slate-500">Live RAG Synthesis</span>
+                </div>
+
+                {/* Streaming Content */}
+                <div className="whitespace-pre-wrap leading-relaxed">
+                  {streamingText || (
+                    <span className="text-slate-400 italic flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                      Retrieving cross-domain evidence and synthesizing answer...
+                    </span>
+                  )}
+                  {streamingText && (
+                    <span className="inline-block w-2 h-3.5 ml-1 bg-emerald-400 animate-pulse" />
+                  )}
+                </div>
+
+                {/* Streaming Citations */}
+                {streamingCitations.length > 0 && (
+                  <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">
+                      Supporting Evidence ({streamingCitations.length})
+                    </span>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {streamingCitations.map((c, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedCitation(c)}
+                          className="flex items-center justify-between p-2 rounded bg-slate-900/90 border border-slate-800 text-left hover:border-emerald-500/40 transition-colors"
+                        >
+                          <div className="truncate">
+                            <span className="text-emerald-400 font-bold block truncate">
+                              {c.document_name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 truncate block">
+                              Page {c.page_number || 1} • {c.section_title || 'General'}
+                            </span>
+                          </div>
+                          <Eye className="w-3.5 h-3.5 text-slate-400 hover:text-emerald-400 shrink-0 ml-2" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Error Message Alert in Chat */}
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="text-rose-400 hover:text-rose-200 ml-2 text-[10px] uppercase font-bold"
+              >
+                Dismiss
+              </button>
             </div>
           )}
 

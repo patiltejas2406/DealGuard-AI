@@ -56,6 +56,7 @@ def upgrade() -> None:
         sa.Column("retrieved_domains", json_type, nullable=False, server_default=sa.text("'[]'")),
         sa.Column("metadata_payload", json_type, nullable=False, server_default=sa.text("'{}'")),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
     )
 
     op.create_index(
