@@ -120,8 +120,10 @@ class CopilotService:
         """Process conversational query, retrieve multi-domain evidence, and persist message history."""
         context.validate_deal_access(deal_id)
 
-        # 1. Resolve conversation
+        # 1. Resolve conversation and past history
         conversation_id = payload.conversation_id
+        conversation_history: List[Dict[str, str]] = []
+
         if not conversation_id:
             title = payload.message[:40] + ("..." if len(payload.message) > 40 else "")
             conv = await self.repo.create_conversation(
@@ -132,6 +134,10 @@ class CopilotService:
             conv = await self.repo.get_conversation(context.organization_id, conversation_id)
             if not conv or conv.deal_id != deal_id:
                 raise NotFoundException("CopilotConversation", conversation_id)
+            if conv.messages:
+                conversation_history = [
+                    {"role": m.role, "content": m.content} for m in conv.messages
+                ]
 
         # 2. Record User Message
         user_msg = await self.repo.create_message(
@@ -147,16 +153,20 @@ class CopilotService:
             organization_id=context.organization_id,
             deal_id=deal_id,
             query=payload.message,
+            conversation_history=conversation_history,
         )
 
         # 4. Generate Grounded Synthesis
         answer_text, confidence, citations = self.engine.generate_grounded_response(
             query=payload.message,
             retrieved_context=retrieved_context,
-            conversation_history=[],
+            conversation_history=conversation_history,
         )
 
         # 5. Record Assistant Message
+        intent_val = getattr(retrieved_context.get("intent"), "value", str(retrieved_context.get("intent")))
+        lang_val = getattr(retrieved_context.get("language"), "value", str(retrieved_context.get("language")))
+
         assistant_msg = await self.repo.create_message(
             organization_id=context.organization_id,
             deal_id=deal_id,
@@ -166,7 +176,11 @@ class CopilotService:
             citations=citations,
             confidence=confidence,
             retrieved_domains=retrieved_context.get("retrieved_domains", []),
-            metadata_payload={"deal_id": str(deal_id)},
+            metadata_payload={
+                "deal_id": str(deal_id),
+                "intent": intent_val,
+                "language": lang_val,
+            },
         )
 
         # 6. Audit Logging
@@ -180,6 +194,8 @@ class CopilotService:
                 entity_id=conversation_id,
                 details={
                     "query": payload.message[:100],
+                    "intent": intent_val,
+                    "language": lang_val,
                     "confidence": confidence,
                     "citations_count": len(citations),
                     "retrieved_domains": retrieved_context.get("retrieved_domains", []),
@@ -201,8 +217,10 @@ class CopilotService:
         """Stream conversational query tokens and citations over Server-Sent Events (SSE)."""
         context.validate_deal_access(deal_id)
 
-        # 1. Resolve conversation
+        # 1. Resolve conversation and past history
         conversation_id = payload.conversation_id
+        conversation_history: List[Dict[str, str]] = []
+
         if not conversation_id:
             title = payload.message[:40] + ("..." if len(payload.message) > 40 else "")
             conv = await self.repo.create_conversation(
@@ -213,6 +231,10 @@ class CopilotService:
             conv = await self.repo.get_conversation(context.organization_id, conversation_id)
             if not conv or conv.deal_id != deal_id:
                 raise NotFoundException("CopilotConversation", conversation_id)
+            if conv.messages:
+                conversation_history = [
+                    {"role": m.role, "content": m.content} for m in conv.messages
+                ]
 
         # 2. Record User Message
         user_msg = await self.repo.create_message(
@@ -228,16 +250,20 @@ class CopilotService:
             organization_id=context.organization_id,
             deal_id=deal_id,
             query=payload.message,
+            conversation_history=conversation_history,
         )
 
         # 4. Generate Grounded Synthesis
         answer_text, confidence, citations = self.engine.generate_grounded_response(
             query=payload.message,
             retrieved_context=retrieved_context,
-            conversation_history=[],
+            conversation_history=conversation_history,
         )
 
         # 5. Record Assistant Message
+        intent_val = getattr(retrieved_context.get("intent"), "value", str(retrieved_context.get("intent")))
+        lang_val = getattr(retrieved_context.get("language"), "value", str(retrieved_context.get("language")))
+
         assistant_msg = await self.repo.create_message(
             organization_id=context.organization_id,
             deal_id=deal_id,
@@ -247,7 +273,11 @@ class CopilotService:
             citations=citations,
             confidence=confidence,
             retrieved_domains=retrieved_context.get("retrieved_domains", []),
-            metadata_payload={"deal_id": str(deal_id)},
+            metadata_payload={
+                "deal_id": str(deal_id),
+                "intent": intent_val,
+                "language": lang_val,
+            },
         )
 
         # 6. Audit Logging
@@ -261,6 +291,8 @@ class CopilotService:
                 entity_id=conversation_id,
                 details={
                     "query": payload.message[:100],
+                    "intent": intent_val,
+                    "language": lang_val,
                     "confidence": confidence,
                     "citations_count": len(citations),
                     "retrieved_domains": retrieved_context.get("retrieved_domains", []),
@@ -273,6 +305,8 @@ class CopilotService:
             "conversation_id": str(conversation_id),
             "user_message_id": str(user_msg.id),
             "assistant_message_id": str(assistant_msg.id),
+            "intent": intent_val,
+            "language": lang_val,
             "created_at": assistant_msg.created_at.isoformat() if hasattr(assistant_msg, "created_at") and assistant_msg.created_at else None,
         }
 
@@ -283,4 +317,3 @@ class CopilotService:
             retrieved_domains=retrieved_context.get("retrieved_domains", []),
             metadata=metadata,
         )
-

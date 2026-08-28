@@ -4,12 +4,17 @@ import re
 from typing import Tuple
 
 ADVERSARIAL_PATTERNS = [
-    re.compile(r"ignore\s+(all\s+)?(previous|prior)\s+instructions", re.IGNORECASE),
-    re.compile(r"disregard\s+(all\s+)?(previous|system)\s+rules", re.IGNORECASE),
-    re.compile(r"reveal\s+(system\s+prompt|api\s+keys|secrets|passwords)", re.IGNORECASE),
+    re.compile(r"ignore\s+(all\s+)?(previous|prior)\s+(instructions|prompts|rules)", re.IGNORECASE),
+    re.compile(r"disregard\s+(all\s+)?(previous|system|prior)\s+(instructions|rules|prompts)", re.IGNORECASE),
+    re.compile(r"reveal\s+(system\s+prompt|api\s+keys?|secrets?|passwords?|credentials?|internal\s+prompt)", re.IGNORECASE),
+    re.compile(r"(show|print|output|display)\s+(the\s+)?(system\s+prompt|api\s+keys?|secrets?|passwords?|environment\s+variables)", re.IGNORECASE),
     re.compile(r"print\s+environment\s+variables", re.IGNORECASE),
     re.compile(r"system\s*:\s*you\s+are\s+now", re.IGNORECASE),
     re.compile(r"you\s+are\s+now\s+in\s+dan\s+mode", re.IGNORECASE),
+    re.compile(r"bypass\s+(all\s+)?(guardrails|safety\s+filters|security)", re.IGNORECASE),
+    re.compile(r"repeat\s+the\s+(entire\s+)?system\s+prompt", re.IGNORECASE),
+    re.compile(r"purane\s+saare\s+instructions\s+bhool\s+jao", re.IGNORECASE),
+    re.compile(r"api\s+key\s+(batao|dikhao|leak\s+karo)", re.IGNORECASE),
 ]
 
 
