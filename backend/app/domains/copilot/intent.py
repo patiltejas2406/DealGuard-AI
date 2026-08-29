@@ -135,7 +135,7 @@ INTENT_PATTERNS: Dict[CopilotIntent, List[re.Pattern]] = {
     ],
     CopilotIntent.FOLLOW_UP: [
         re.compile(r"^\s*(why\??|why\s+so\??|explain\s+why\??|kyun\??|kyu\??|aisa\s+kyun\??|reason\s+kya\s+hai\??)\s*$", re.IGNORECASE),
-        re.compile(r"\b(agar\s+ye\s+risk\s+solve\s+ho\s+jaye\s+toh|what\s+if\s+this\s+risk\s+is\s+(solved|mitigated|fixed)|agar\s+risk\s+fix\s+ho\s+jaye)\b", re.IGNORECASE),
+        re.compile(r"\b(agar\s+ye\s+risk\s+solve\s+ho\s+jaye\s+toh|what\s+if\s+(this|the|the\s+biggest)?\s*risk\s+is\s+(solved|mitigated|fixed|resolved)|agar\s+risk\s+(fix|solve)\s+ho\s+jaye)\b", re.IGNORECASE),
     ],
 }
 

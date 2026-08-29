@@ -96,7 +96,7 @@ class RiskIntelligenceAgent(BaseSpecialistAgent):
                             document_name=doc_name,
                             page_number=cit.page_number or 1,
                             section_title="Risk Factors Disclosure",
-                            exact_quote=cit.quote,
+                            exact_quote=cit.exact_quote,
                             confidence_score=cit.confidence_score or 0.95,
                         )
                     )
