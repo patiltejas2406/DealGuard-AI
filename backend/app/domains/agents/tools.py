@@ -95,15 +95,15 @@ class AgentToolRegistry:
             "ml_prediction_tool",
         ],
         # Post-Deal Extensions
-        AgentId.GROWTH: ["growth_waterfall_tool", "customer_expansion_tool"],
-        AgentId.REVENUE: ["pricing_elasticity_tool", "revenue_bridge_tool"],
-        AgentId.MARKETING: ["cac_ltv_tool", "campaign_efficiency_tool"],
-        AgentId.CUSTOMER: ["retention_cohort_tool", "nps_sentiment_tool"],
-        AgentId.COST_OPT: ["procurement_spend_tool", "headcount_synergy_tool"],
-        AgentId.OPERATIONS: ["throughput_sla_tool", "facility_utilization_tool"],
-        AgentId.FP_AND_A: ["rolling_forecast_tool", "budget_variance_tool"],
-        AgentId.STRATEGY: ["market_share_tam_tool", "ma_pipeline_tool"],
-        AgentId.MONITORING: ["kpi_health_dashboard_tool", "covenant_compliance_tool"],
+        AgentId.GROWTH: ["growth_waterfall_tool", "customer_expansion_tool", "pricing_elasticity_tool", "revenue_bridge_tool"],
+        AgentId.REVENUE: ["pricing_elasticity_tool", "revenue_bridge_tool", "customer_expansion_tool", "post_deal_metrics_tool"],
+        AgentId.MARKETING: ["cac_ltv_tool", "campaign_efficiency_tool", "customer_cohort_tool"],
+        AgentId.CUSTOMER: ["retention_cohort_tool", "nps_sentiment_tool", "customer_portfolio_tool", "ml_prediction_tool"],
+        AgentId.COST_OPT: ["procurement_spend_tool", "headcount_synergy_tool", "operational_metrics_tool", "cloud_cost_risk_tool"],
+        AgentId.OPERATIONS: ["throughput_sla_tool", "facility_utilization_tool", "operational_metrics_tool", "integration_health_score_tool"],
+        AgentId.FP_AND_A: ["rolling_forecast_tool", "budget_variance_tool", "financial_statements_tool", "post_deal_metrics_tool"],
+        AgentId.STRATEGY: ["market_share_tam_tool", "ma_pipeline_tool", "acquisition_thesis_tool", "value_creation_synthesis_tool"],
+        AgentId.MONITORING: ["kpi_health_dashboard_tool", "covenant_compliance_tool", "post_deal_metrics_tool", "integration_health_score_tool"],
     }
 
     @classmethod

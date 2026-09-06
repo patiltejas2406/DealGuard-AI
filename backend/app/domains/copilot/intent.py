@@ -122,20 +122,32 @@ INTENT_PATTERNS: Dict[CopilotIntent, List[re.Pattern]] = {
         re.compile(r"\b(valuation\s+sahi\s+hai\s+kya|valuation\s+theek\s+hai\s+kya|valuation\s+justifiable|sahi\s+daam|price\s+sahi)\b", re.IGNORECASE),
     ],
     CopilotIntent.POST_ACQUISITION: [
-        re.compile(r"\b(post[- ]acquisition|after\s+acquisition|100[- ]day|first\s+30\s+days|first\s+100\s+days|day\s+1\s+priorities|post[- ]close)\b", re.IGNORECASE),
+        re.compile(r"\b(post[- ]acquisition|after\s+acquisition|100[- ]day|first\s+30\s+days|first\s+100\s+days|day\s+1\s+priorities|post[- ]close|value\s+creation)\b", re.IGNORECASE),
         re.compile(r"\b(acquisition\s+ke\s+baad|deal\s+ke\s+baad|close\s+hone\s+ke\s+baad|post[- ]acquisition\s+kya)\b", re.IGNORECASE),
+        re.compile(r"\b(business\s+kaisa\s+perform\s+kar\s+raha\s+hai|acquisition\s+ke\s+baad\s+growth\s+kaisi\s+hai)\b", re.IGNORECASE),
+        re.compile(r"\b(how\s+is\s+the\s+(acquired\s+)?business\s+performing|are\s+we\s+creating\s+value)\b", re.IGNORECASE),
+        re.compile(r"\b(what\s+should\s+management\s+(do\s+next|focus\s+on)|what\s+to\s+focus\s+on)\b", re.IGNORECASE),
+        re.compile(r"\b(where\s+are\s+we\s+losing\s+money|biggest\s+growth\s+opportunity)\b", re.IGNORECASE),
+        re.compile(r"\b(are\s+we\s+on\s+track\s+with\s+the\s+(acquisition\s+)?thesis|thesis\s+status)\b", re.IGNORECASE),
+        re.compile(r"\b(business\s+grow\s+kaise\s+kar\s+sakte\s+hain|management\s+ko\s+kya\s+karna\s+chahiye)\b", re.IGNORECASE),
     ],
     CopilotIntent.INTEGRATION: [
         re.compile(r"\b(integration|workstream|milestones?|critical\s+path|blockers?|day\s+1\s+readiness)\b", re.IGNORECASE),
         re.compile(r"\b(integration\s+kaise\s+hoga|100[- ]day\s+plan\s+kya\s+hai|shuru\s+mein\s+kya\s+karna)\b", re.IGNORECASE),
+        re.compile(r"\b(how\s+is\s+integration\s+progressing|what\s+is\s+pending|which\s+integration\s+milestones\s+are\s+at\s+risk)\b", re.IGNORECASE),
+        re.compile(r"\b(100[- ]day\s+plan\s+ka\s+kya\s+status\s+hai|integration\s+ka\s+kya\s+scene\s+hai|kya\s+pending\s+hai)\b", re.IGNORECASE),
     ],
     CopilotIntent.SYNERGY_ANALYSIS: [
         re.compile(r"\b(synerg(y|ies)|value\s+creation|cost\s+savings|cross[- ]sell|run[- ]rate\s+synerg)\b", re.IGNORECASE),
         re.compile(r"\b(synergy\s+kya\s+hai|cost\s+savings\s+kahaan|value\s+creation\s+kaise)\b", re.IGNORECASE),
+        re.compile(r"\b(are\s+we\s+realizing\s+the\s+synergies\s+we\s+expected|synergies\s+achieved)\b", re.IGNORECASE),
+        re.compile(r"\b(synergy\s+actually\s+achieve\s+hui\s+kya|kitni\s+synergy\s+actually\s+achieve\s+hui)\b", re.IGNORECASE),
     ],
     CopilotIntent.FOLLOW_UP: [
         re.compile(r"^\s*(why\??|why\s+so\??|explain\s+why\??|kyun\??|kyu\??|aisa\s+kyun\??|reason\s+kya\s+hai\??)\s*$", re.IGNORECASE),
+        re.compile(r"^\s*(what\s+should\s+we\s+do\??|what\s+next\??|ab\s+kya\s+karein\??|kya\s+karna\s+chahiye\??)\s*$", re.IGNORECASE),
         re.compile(r"\b(agar\s+ye\s+risk\s+solve\s+ho\s+jaye\s+toh|what\s+if\s+(this|the|the\s+biggest)?\s*risk\s+is\s+(solved|mitigated|fixed|resolved)|agar\s+risk\s+(fix|solve)\s+ho\s+jaye)\b", re.IGNORECASE),
+        re.compile(r"\b(what\s+if\s+customer\s+churn\s+increases|agar\s+(customer\s+)?churn\s+badh\s+jaye)\b", re.IGNORECASE),
     ],
 }
 
@@ -151,6 +163,7 @@ INTENT_DOMAIN_ROUTING: Dict[CopilotIntent, List[str]] = {
         "TECHNOLOGY_OPERATIONS",
         "SYNERGIES",
         "INTEGRATION",
+        "POST_ACQUISITION",
         "DOCUMENTS",
     ],
     CopilotIntent.RISK_ANALYSIS: [
@@ -186,11 +199,13 @@ INTENT_DOMAIN_ROUTING: Dict[CopilotIntent, List[str]] = {
         "DOCUMENTS",
     ],
     CopilotIntent.POST_ACQUISITION: [
+        "POST_ACQUISITION",
         "INTEGRATION",
         "SYNERGIES",
         "TECHNOLOGY_OPERATIONS",
         "FINANCIALS",
         "RISKS",
+        "DOCUMENTS",
     ],
     CopilotIntent.INTEGRATION: [
         "INTEGRATION",
@@ -200,6 +215,7 @@ INTENT_DOMAIN_ROUTING: Dict[CopilotIntent, List[str]] = {
     ],
     CopilotIntent.SYNERGY_ANALYSIS: [
         "SYNERGIES",
+        "POST_ACQUISITION",
         "FINANCIALS",
         "INTEGRATION",
         "DOCUMENTS",
@@ -210,9 +226,11 @@ INTENT_DOMAIN_ROUTING: Dict[CopilotIntent, List[str]] = {
         "RISKS",
         "LEGAL_CONTRACTS",
         "TECHNOLOGY_OPERATIONS",
+        "POST_ACQUISITION",
     ],
     CopilotIntent.FOLLOW_UP: [
         "DECISION_SCORE",
+        "POST_ACQUISITION",
         "FINANCIALS",
         "RISKS",
         "LEGAL_CONTRACTS",

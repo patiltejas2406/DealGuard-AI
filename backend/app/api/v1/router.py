@@ -15,6 +15,7 @@ from app.api.v1.endpoints import (
     legal,
     ml,
     organizations,
+    post_acquisition,
     risk,
     scenarios,
     synergies,
@@ -49,6 +50,7 @@ api_router.include_router(technology.router)
 api_router.include_router(copilot.router)
 api_router.include_router(agents.router)
 api_router.include_router(ml.router)
+api_router.include_router(post_acquisition.router)
 
 
 

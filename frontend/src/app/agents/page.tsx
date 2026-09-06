@@ -30,6 +30,9 @@ import {
   MLModelItem,
   AgentAssessmentItem,
   PredictionResultItem,
+  PostAcquisitionOverviewItem,
+  PostAcquisitionThesisItem,
+  PostAcquisitionCustomersItem,
 } from '@/lib/api';
 import { Deal } from '@/types';
 import { cn } from '@/lib/utils';
@@ -46,12 +49,26 @@ export default function AgentOrchestrationPage() {
   const [orchestrationMode, setOrchestrationMode] = useState<string>('FULL_DEAL_DECISION');
   const [queryInput, setQueryInput] = useState<string>('');
   const [orchestrationResult, setOrchestrationResult] = useState<AgentOrchestrationResultItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'decision' | 'specialists' | 'ml' | 'extensibility'>('decision');
+  const [activeTab, setActiveTab] = useState<'decision' | 'specialists' | 'ml' | 'extensibility' | 'post_deal'>('decision');
   const [error, setError] = useState<string | null>(null);
+
+  // Post-Acquisition State
+  const [postAcqOverview, setPostAcqOverview] = useState<PostAcquisitionOverviewItem | null>(null);
+  const [postAcqTheses, setPostAcqTheses] = useState<PostAcquisitionThesisItem | null>(null);
+  const [postAcqCustomers, setPostAcqCustomers] = useState<PostAcquisitionCustomersItem | null>(null);
+  const [postAcqLoading, setPostAcqLoading] = useState<boolean>(false);
+  const [runningPostDealAgent, setRunningPostDealAgent] = useState<string | null>(null);
+  const [postDealAgentResult, setPostDealAgentResult] = useState<AgentAssessmentItem | null>(null);
 
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    if (selectedDealId && (activeTab === 'post_deal' || activeTab === 'extensibility')) {
+      loadPostAcquisitionData(selectedDealId);
+    }
+  }, [selectedDealId, activeTab]);
 
   const loadInitialData = async () => {
     try {
@@ -72,6 +89,43 @@ export default function AgentOrchestrationPage() {
       setError(err.message || 'Failed to initialize agent metadata catalog.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPostAcquisitionData = async (dealId: string) => {
+    try {
+      setPostAcqLoading(true);
+      const [overview, theses, customers] = await Promise.all([
+        api.getPostAcquisitionOverview(dealId).catch(() => null),
+        api.getPostAcquisitionThesis(dealId).catch(() => null),
+        api.getPostAcquisitionCustomers(dealId).catch(() => null),
+      ]);
+      setPostAcqOverview(overview);
+      setPostAcqTheses(theses);
+      setPostAcqCustomers(customers);
+    } catch (err: any) {
+      console.warn('Failed to load post-acquisition details:', err);
+    } finally {
+      setPostAcqLoading(false);
+    }
+  };
+
+  const handleRunPostDealAgent = async (agentId: string) => {
+    if (!selectedDealId) {
+      setError('Please select an active deal.');
+      return;
+    }
+    try {
+      setRunningPostDealAgent(agentId);
+      setError(null);
+      const res = await api.runStandaloneAgent(selectedDealId, agentId, {
+        query: queryInput.trim() ? queryInput.trim() : undefined,
+      });
+      setPostDealAgentResult(res);
+    } catch (err: any) {
+      setError(err.message || `Failed to execute specialist agent '${agentId}'.`);
+    } finally {
+      setRunningPostDealAgent(null);
     }
   };
 
@@ -193,12 +247,15 @@ export default function AgentOrchestrationPage() {
             <select
               value={orchestrationMode}
               onChange={(e) => setOrchestrationMode(e.target.value)}
-              className="rounded-lg border border-surface-border bg-surface px-3 py-2 text-xs font-medium text-white focus:border-primary-500 focus:outline-none"
+              className="rounded-lg border border-surface-border bg-surface px-3 py-2 text-xs text-white focus:border-primary-500 focus:outline-none"
             >
-              <option value="FULL_DEAL_DECISION">Full Deal Decision Synthesis (8 Agents)</option>
-              <option value="TECH_AND_INTEGRATION_RISK">Tech, SPOF & 100-Day Integration</option>
-              <option value="FINANCIAL_AND_VALUATION">Financial Statements & Valuation Lab</option>
-              <option value="LEGAL_AND_RISK">Contract VaR & 17-Pillar Risk Engine</option>
+              <option value="FULL_DEAL_DECISION">Pre-Deal Decision Synthesis (8 Diligence Agents)</option>
+              <option value="POST_ACQUISITION_VALUE_CREATION">Post-Acquisition Value Creation (8 Specialists)</option>
+              <option value="CUSTOMER_AND_GROWTH">Customer Retention & Growth</option>
+              <option value="POST_DEAL_PERFORMANCE">Operating Performance & FP&A</option>
+              <option value="TECH_AND_INTEGRATION_RISK">Tech & Integration Risk</option>
+              <option value="FINANCIAL_AND_VALUATION">Financial & Valuation Lab</option>
+              <option value="LEGAL_AND_RISK">Legal & Compliance Risk</option>
             </select>
 
             <button
@@ -229,7 +286,7 @@ export default function AgentOrchestrationPage() {
         <div>
           <input
             type="text"
-            placeholder="Optional diligence hypothesis or focus (e.g., 'Examine customer churn risk and AWS cloud unit economics')..."
+            placeholder="Optional diligence or post-deal query (e.g., '100-day plan ka kya status hai?' or 'Which customers are at risk?')..."
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
             className="w-full rounded-lg border border-surface-border bg-surface px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:border-primary-500 focus:outline-none"
@@ -245,11 +302,11 @@ export default function AgentOrchestrationPage() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex border-b border-surface-border">
+      <div className="flex border-b border-surface-border overflow-x-auto">
         <button
           onClick={() => setActiveTab('decision')}
           className={cn(
-            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors',
+            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap',
             activeTab === 'decision'
               ? 'border-primary-500 text-primary-400'
               : 'border-transparent text-gray-400 hover:text-white'
@@ -265,22 +322,47 @@ export default function AgentOrchestrationPage() {
         </button>
 
         <button
+          onClick={() => setActiveTab('post_deal')}
+          className={cn(
+            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap',
+            activeTab === 'post_deal'
+              ? 'border-emerald-500 text-emerald-400'
+              : 'border-transparent text-gray-400 hover:text-white'
+          )}
+        >
+          <TrendingUp className="h-4 w-4" />
+          Post-Acquisition & Value Creation ({postDealAgents.length})
+          {postAcqOverview && (
+            <span className={cn(
+              "ml-1 rounded px-1.5 py-0.5 text-[10px] font-semibold border",
+              postAcqOverview.overall_thesis_status === 'ON_TRACK'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                : postAcqOverview.overall_thesis_status === 'AT_RISK'
+                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+            )}>
+              {postAcqOverview.overall_thesis_status.replace(/_/g, ' ')}
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab('specialists')}
           className={cn(
-            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors',
+            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap',
             activeTab === 'specialists'
               ? 'border-primary-500 text-primary-400'
               : 'border-transparent text-gray-400 hover:text-white'
           )}
         >
           <Bot className="h-4 w-4" />
-          Specialist Agents ({preDealAgents.length})
+          Pre-Deal Specialists ({preDealAgents.length})
         </button>
 
         <button
           onClick={() => setActiveTab('ml')}
           className={cn(
-            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors',
+            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors whitespace-nowrap',
             activeTab === 'ml'
               ? 'border-primary-500 text-primary-400'
               : 'border-transparent text-gray-400 hover:text-white'
@@ -288,19 +370,6 @@ export default function AgentOrchestrationPage() {
         >
           <Cpu className="h-4 w-4" />
           ML & XAI Foundation ({mlModels.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('extensibility')}
-          className={cn(
-            'flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors',
-            activeTab === 'extensibility'
-              ? 'border-primary-500 text-primary-400'
-              : 'border-transparent text-gray-400 hover:text-white'
-          )}
-        >
-          <TrendingUp className="h-4 w-4" />
-          Post-Deal Growth Registry ({postDealAgents.length})
         </button>
       </div>
 
@@ -846,44 +915,311 @@ export default function AgentOrchestrationPage() {
         </div>
       )}
 
-      {/* Tab Content: Post-Deal Extensibility */}
-      {activeTab === 'extensibility' && (
-        <div className="space-y-4">
-          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary-400" />
-              Post-Acquisition Corporate Value Creation Registry
-            </h3>
+      {/* Tab Content: Post-Acquisition Intelligence & Value Creation */}
+      {(activeTab === 'post_deal' || activeTab === 'extensibility') && (
+        <div className="space-y-6">
+          {/* Header Banner */}
+          <div className="rounded-xl border border-surface-border bg-surface-card p-5 space-y-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-mono font-semibold uppercase text-emerald-400">
+                  Phase 19 &bull; Post-Acquisition Operational Intelligence
+                </span>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  Post-Acquisition Intelligence, Value Creation & Growth Console
+                </h3>
+              </div>
+
+              {postAcqOverview && (
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase text-gray-500 font-semibold">Thesis Alignment</div>
+                    <span className={cn(
+                      "rounded-full px-2.5 py-0.5 text-xs font-bold font-mono border",
+                      postAcqOverview.overall_thesis_status === 'ON_TRACK'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        : postAcqOverview.overall_thesis_status === 'AT_RISK'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                    )}>
+                      {postAcqOverview.overall_thesis_status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+
+                  <div className="text-right border-l border-surface-border pl-4">
+                    <div className="text-[10px] uppercase text-gray-500 font-semibold">Enterprise Health</div>
+                    <div className="text-base font-bold font-mono text-emerald-400">
+                      {postAcqOverview.health_score.toFixed(1)} <span className="text-xs text-gray-500 font-normal">/ 100</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <p className="text-xs text-gray-400">
-              Clean modular extension points supporting company growth, customer retention, pricing elasticity, and continuous performance telemetry.
+              Deterministic post-close monitoring across 100-day integration velocity, customer retention cohorts, synergy realization, and executive acquisition thesis tracking.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {postDealAgents.map((agent) => (
-              <div
-                key={agent.agent_id}
-                className="rounded-xl border border-surface-border bg-surface-card p-5 space-y-3"
-              >
-                <div>
-                  <span className="text-[10px] font-mono font-semibold uppercase text-purple-400">
-                    {agent.domain}
-                  </span>
-                  <h4 className="text-sm font-bold text-white">{agent.name}</h4>
+          {/* Post-Acquisition Executive Overview KPI Grid */}
+          {postAcqOverview && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="rounded-xl border border-surface-border bg-surface-card p-3 space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-gray-500">Customer Base ARR</span>
+                <div className="text-base font-bold font-mono text-white">
+                  ${postAcqOverview.total_arr.toLocaleString()}
                 </div>
-                <p className="text-xs text-gray-300">{agent.purpose}</p>
-                <div className="space-y-1">
-                  <div className="text-[10px] font-semibold uppercase text-gray-500">Planned Tools</div>
-                  <div className="flex flex-wrap gap-1">
-                    {agent.allowed_tools.map((t) => (
-                      <span key={t} className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono text-purple-300 border border-purple-500/20">
-                        {t}
-                      </span>
+                <div className="text-[10px] text-gray-400">
+                  {postAcqOverview.at_risk_customers_count > 0 ? (
+                    <span className="text-amber-400">{postAcqOverview.at_risk_customers_count} accounts at risk</span>
+                  ) : (
+                    <span className="text-emerald-400">Zero churn risks</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-surface-border bg-surface-card p-3 space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-gray-500">Net Retention (NRR)</span>
+                <div className="text-base font-bold font-mono text-white">
+                  {postAcqOverview.nrr_pct !== null && postAcqOverview.nrr_pct !== undefined
+                    ? `${postAcqOverview.nrr_pct.toFixed(1)}%`
+                    : 'Awaiting Feeds'}
+                </div>
+                <div className="text-[10px] text-gray-400">
+                  {postAcqOverview.nrr_pct && postAcqOverview.nrr_pct >= 100 ? (
+                    <span className="text-emerald-400">Net Expansion</span>
+                  ) : (
+                    <span className="text-amber-400">Baseline Target</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-surface-border bg-surface-card p-3 space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-gray-500">Synergy Realization</span>
+                <div className="text-base font-bold font-mono text-white">
+                  {postAcqOverview.synergy_realization_pct !== null && postAcqOverview.synergy_realization_pct !== undefined
+                    ? `${postAcqOverview.synergy_realization_pct.toFixed(1)}%`
+                    : 'Awaiting Logs'}
+                </div>
+                <div className="text-[10px] text-gray-400">Actual vs Expected</div>
+              </div>
+
+              <div className="rounded-xl border border-surface-border bg-surface-card p-3 space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-gray-500">100-Day Integration</span>
+                <div className="text-base font-bold font-mono text-white">
+                  {postAcqOverview.integration_completion_pct.toFixed(1)}%
+                </div>
+                <div className="text-[10px] text-gray-400">Milestones Complete</div>
+              </div>
+
+              <div className="rounded-xl border border-surface-border bg-surface-card p-3 space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-gray-500">Open Blockers</span>
+                <div className={cn(
+                  "text-base font-bold font-mono",
+                  postAcqOverview.open_blockers_count > 0 ? "text-rose-400" : "text-emerald-400"
+                )}>
+                  {postAcqOverview.open_blockers_count}
+                </div>
+                <div className="text-[10px] text-gray-400">Critical Path Items</div>
+              </div>
+
+              <div className="rounded-xl border border-surface-border bg-surface-card p-3 space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-gray-500">Value Programs</span>
+                <div className="text-base font-bold font-mono text-white">
+                  {postAcqOverview.active_initiatives_count}
+                </div>
+                <div className="text-[10px] text-gray-400">Strategic OKRs</div>
+              </div>
+            </div>
+          )}
+
+          {/* Standalone Post-Deal Specialist Execution Output */}
+          {postDealAgentResult && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-5 space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] font-mono font-semibold uppercase text-emerald-400">
+                    Specialist Execution Result &bull; {postDealAgentResult.domain}
+                  </span>
+                  <h4 className="text-base font-bold text-white">{postDealAgentResult.agent_id}</h4>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono font-semibold text-emerald-400">
+                    {(postDealAgentResult.confidence_score * 100).toFixed(0)}% Conf ({postDealAgentResult.confidence})
+                  </span>
+                  <div className="text-[10px] font-mono text-gray-400">{postDealAgentResult.execution_time_ms.toFixed(1)}ms</div>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-200 leading-relaxed bg-surface/60 p-3 rounded-lg border border-surface-border">
+                {postDealAgentResult.summary}
+              </p>
+
+              {/* Findings */}
+              {postDealAgentResult.key_findings.length > 0 && (
+                <div className="space-y-2">
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-gray-400">Specialist Findings</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {postDealAgentResult.key_findings.map((f, i) => (
+                      <div key={i} className="rounded-lg border border-surface-border bg-surface/40 p-3 space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-semibold text-white">{f.headline}</span>
+                          <span className="text-primary-400 font-mono text-[10px]">{f.category}</span>
+                        </div>
+                        <p className="text-xs text-gray-300">{f.detailed_reasoning}</p>
+                      </div>
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* Data Gaps if any */}
+              {postDealAgentResult.data_gaps && postDealAgentResult.data_gaps.length > 0 && (
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 space-y-1">
+                  <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Missing Post-Acquisition Data Records ({postDealAgentResult.data_gaps.length})
+                  </span>
+                  <ul className="text-xs text-gray-300 space-y-1">
+                    {postDealAgentResult.data_gaps.map((g, i) => (
+                      <li key={i}>&bull; {g}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Acquisition Thesis Tracker Card */}
+          {postAcqTheses && postAcqTheses.theses.length > 0 && (
+            <div className="rounded-xl border border-surface-border bg-surface-card p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                    Acquisition Thesis Scorecard (Pre-Deal Expectations vs Actuals)
+                  </h4>
+                  <p className="text-xs text-gray-400">
+                    Authoritative tracking of target milestones established during diligence.
+                  </p>
+                </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {postAcqTheses.theses.map((thesis) => (
+                  <div
+                    key={thesis.id}
+                    className="rounded-lg border border-surface-border bg-surface/50 p-3 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase text-gray-400 font-bold">
+                        {thesis.thesis_pillar}
+                      </span>
+                      <span
+                        className={cn(
+                          'rounded px-2 py-0.5 text-[10px] font-semibold border',
+                          thesis.status === 'ON_TRACK'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : thesis.status === 'AT_RISK'
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                            : thesis.status === 'OFF_TRACK'
+                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                            : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                        )}
+                      >
+                        {thesis.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="text-xs font-semibold text-white">{thesis.target_metric}</div>
+                    <div className="flex items-center justify-between text-[11px] font-mono pt-1 border-t border-surface-border text-gray-400">
+                      <span>Target: ${thesis.target_value.toLocaleString()}</span>
+                      <span>
+                        Actual:{' '}
+                        {thesis.actual_value !== null && thesis.actual_value !== undefined
+                          ? `$${thesis.actual_value.toLocaleString()}`
+                          : 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Post-Deal Specialist Agents Interactive Catalog */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <Bot className="h-4 w-4 text-emerald-400" />
+              Post-Acquisition Specialist Agents ({postDealAgents.length})
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {postDealAgents.map((agent) => {
+                const isRunning = runningPostDealAgent === agent.agent_id;
+
+                return (
+                  <div
+                    key={agent.agent_id}
+                    className="rounded-xl border border-surface-border bg-surface-card p-5 space-y-3 flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-mono font-semibold uppercase text-emerald-400">
+                            {agent.domain}
+                          </span>
+                          <h4 className="text-sm font-bold text-white">{agent.name}</h4>
+                        </div>
+                        <span className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono text-gray-400 border border-surface-border">
+                          v{agent.version}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-gray-300 line-clamp-3">{agent.purpose}</p>
+
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-semibold uppercase text-gray-500">Authorized Tools</div>
+                        <div className="flex flex-wrap gap-1">
+                          {agent.allowed_tools.map((t) => (
+                            <span
+                              key={t}
+                              className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-mono text-emerald-400 border border-emerald-500/20"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-surface-border">
+                      <button
+                        onClick={() => handleRunPostDealAgent(agent.agent_id)}
+                        disabled={isRunning || !selectedDealId}
+                        className={cn(
+                          'w-full inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors',
+                          isRunning
+                            ? 'bg-emerald-500/50 text-white cursor-not-allowed'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                        )}
+                      >
+                        {isRunning ? (
+                          <>
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                            Executing Agent Assessment...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-3 w-3" />
+                            Run Specialist Agent
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

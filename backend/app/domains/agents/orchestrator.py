@@ -29,6 +29,19 @@ from app.domains.agents.specialists.valuation import ValuationAgent
 from app.domains.audit.service import AuditService
 
 
+from app.domains.agents.post_deal.extensibility import (
+    CorporateStrategyAgent,
+    CostOptimizationAgent,
+    CustomerRetentionAgent,
+    FPandAAgent,
+    GrowthIntelligenceAgent,
+    MarketingIntelligenceAgent,
+    OperationsIntelligenceAgent,
+    PerformanceMonitoringAgent,
+    RevenueOptimizationAgent,
+)
+
+
 class AgentOrchestrationResult:
     """Consolidated payload returned by the multi-agent orchestrator."""
 
@@ -92,6 +105,16 @@ class AgentOrchestrator:
             AgentId.SCENARIO: ScenarioSimulationAgent,
             AgentId.INTEGRATION: IntegrationIntelligenceAgent,
             AgentId.SYNERGY: SynergyValueCreationAgent,
+            # Post-Deal Specialists
+            AgentId.GROWTH: GrowthIntelligenceAgent,
+            AgentId.REVENUE: RevenueOptimizationAgent,
+            AgentId.MARKETING: MarketingIntelligenceAgent,
+            AgentId.CUSTOMER: CustomerRetentionAgent,
+            AgentId.COST_OPT: CostOptimizationAgent,
+            AgentId.OPERATIONS: OperationsIntelligenceAgent,
+            AgentId.FP_AND_A: FPandAAgent,
+            AgentId.STRATEGY: CorporateStrategyAgent,
+            AgentId.MONITORING: PerformanceMonitoringAgent,
         }
         factory = factories.get(agent_id)
         if not factory:
@@ -117,6 +140,26 @@ class AgentOrchestrator:
                 AgentId.SYNERGY,
             ]
 
+        if mode in ["POST_ACQUISITION_VALUE_CREATION", "POST_DEAL_VALUE_CREATION", "POST_CLOSE", "VALUE_CREATION"]:
+            return [
+                AgentId.STRATEGY,
+                AgentId.MONITORING,
+                AgentId.CUSTOMER,
+                AgentId.GROWTH,
+                AgentId.REVENUE,
+                AgentId.COST_OPT,
+                AgentId.OPERATIONS,
+                AgentId.FP_AND_A,
+                AgentId.INTEGRATION,
+                AgentId.SYNERGY,
+            ]
+
+        if mode == "CUSTOMER_AND_GROWTH":
+            return [AgentId.CUSTOMER, AgentId.GROWTH, AgentId.REVENUE]
+
+        if mode == "POST_DEAL_PERFORMANCE":
+            return [AgentId.FP_AND_A, AgentId.REVENUE, AgentId.SYNERGY, AgentId.MONITORING]
+
         if mode == "TECH_AND_INTEGRATION_RISK":
             return [AgentId.TECHNOLOGY, AgentId.INTEGRATION, AgentId.RISK]
 
@@ -139,6 +182,11 @@ class AgentOrchestrator:
                 "VALUATION": [AgentId.VALUATION],
                 "SYNERGIES": [AgentId.SYNERGY],
                 "INTEGRATION": [AgentId.INTEGRATION],
+                "POST_ACQUISITION": [AgentId.STRATEGY, AgentId.MONITORING, AgentId.CUSTOMER, AgentId.FP_AND_A, AgentId.INTEGRATION, AgentId.SYNERGY],
+                "POST_DEAL_PERFORMANCE": [AgentId.FP_AND_A, AgentId.REVENUE, AgentId.MONITORING],
+                "POST_DEAL_CUSTOMERS": [AgentId.CUSTOMER, AgentId.GROWTH],
+                "POST_DEAL_GROWTH": [AgentId.GROWTH, AgentId.REVENUE],
+                "POST_DEAL_COST": [AgentId.COST_OPT, AgentId.OPERATIONS],
                 "DECISION_SCORE": [AgentId.FINANCE, AgentId.RISK, AgentId.VALUATION, AgentId.LEGAL, AgentId.TECHNOLOGY, AgentId.INTEGRATION, AgentId.SYNERGY],
             }
 
@@ -167,7 +215,21 @@ class AgentOrchestrator:
         q_lower = (query or "").lower()
         selected_fallback: Set[AgentId] = set()
 
-        if any(w in q_lower for w in ["finance", "revenue", "ebitda", "qoe", "margin"]):
+        if any(w in q_lower for w in ["customer", "churn", "retention", "nrr", "client"]):
+            selected_fallback.add(AgentId.CUSTOMER)
+        if any(w in q_lower for w in ["growth", "expansion", "upsell", "cross-sell"]):
+            selected_fallback.add(AgentId.GROWTH)
+        if any(w in q_lower for w in ["pricing", "price", "elasticity", "margin"]):
+            selected_fallback.add(AgentId.REVENUE)
+        if any(w in q_lower for w in ["cost", "procurement", "cloud spend", "headcount", "redundanc"]):
+            selected_fallback.add(AgentId.COST_OPT)
+        if any(w in q_lower for w in ["sla", "uptime", "incident", "throughput", "operation"]):
+            selected_fallback.add(AgentId.OPERATIONS)
+        if any(w in q_lower for w in ["thesis", "value creation", "management", "focus"]):
+            selected_fallback.add(AgentId.STRATEGY)
+        if any(w in q_lower for w in ["monitoring", "telemetry", "health score", "kpi"]):
+            selected_fallback.add(AgentId.MONITORING)
+        if any(w in q_lower for w in ["finance", "revenue", "ebitda", "qoe"]):
             selected_fallback.add(AgentId.FINANCE)
         if any(w in q_lower for w in ["valuation", "dcf", "multiple", "comps", "precedent"]):
             selected_fallback.add(AgentId.VALUATION)
@@ -175,13 +237,13 @@ class AgentOrchestrator:
             selected_fallback.add(AgentId.RISK)
         if any(w in q_lower for w in ["legal", "contract", "change of control", "compliance"]):
             selected_fallback.add(AgentId.LEGAL)
-        if any(w in q_lower for w in ["tech", "cloud", "spof", "architecture", "sla"]):
+        if any(w in q_lower for w in ["tech", "cloud", "spof", "architecture"]):
             selected_fallback.add(AgentId.TECHNOLOGY)
         if any(w in q_lower for w in ["scenario", "what-if", "recession", "monte carlo"]):
             selected_fallback.add(AgentId.SCENARIO)
         if any(w in q_lower for w in ["integration", "100-day", "milestone", "workstream"]):
             selected_fallback.add(AgentId.INTEGRATION)
-        if any(w in q_lower for w in ["synergy", "cost savings", "upsell", "waterfall"]):
+        if any(w in q_lower for w in ["synergy", "cost savings", "waterfall"]):
             selected_fallback.add(AgentId.SYNERGY)
 
         if not selected_fallback:

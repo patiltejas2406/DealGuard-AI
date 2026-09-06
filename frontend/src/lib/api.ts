@@ -921,6 +921,73 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+
+  // Post-Acquisition Intelligence & Value Creation
+  getPostAcquisitionOverview: async (dealId: string): Promise<PostAcquisitionOverviewItem> => {
+    return fetchJson<PostAcquisitionOverviewItem>(`/deals/${dealId}/post-acquisition/overview`);
+  },
+
+  getPostAcquisitionPerformance: async (dealId: string): Promise<PostAcquisitionPerformanceItem> => {
+    return fetchJson<PostAcquisitionPerformanceItem>(`/deals/${dealId}/post-acquisition/performance`);
+  },
+
+  getPostAcquisitionIntegration: async (dealId: string): Promise<PostAcquisitionIntegrationItem> => {
+    return fetchJson<PostAcquisitionIntegrationItem>(`/deals/${dealId}/post-acquisition/integration`);
+  },
+
+  getPostAcquisitionSynergies: async (dealId: string): Promise<PostAcquisitionSynergiesItem> => {
+    return fetchJson<PostAcquisitionSynergiesItem>(`/deals/${dealId}/post-acquisition/synergies`);
+  },
+
+  getPostAcquisitionCustomers: async (dealId: string): Promise<PostAcquisitionCustomersItem> => {
+    return fetchJson<PostAcquisitionCustomersItem>(`/deals/${dealId}/post-acquisition/customers`);
+  },
+
+  getPostAcquisitionRisks: async (dealId: string): Promise<PostAcquisitionRisksItem> => {
+    return fetchJson<PostAcquisitionRisksItem>(`/deals/${dealId}/post-acquisition/risks`);
+  },
+
+  getPostAcquisitionThesis: async (dealId: string): Promise<PostAcquisitionThesisItem> => {
+    return fetchJson<PostAcquisitionThesisItem>(`/deals/${dealId}/post-acquisition/thesis`);
+  },
+
+  analyzePostAcquisition: async (
+    dealId: string,
+    payload?: { query?: string; target_agent_ids?: string[] }
+  ): Promise<AgentOrchestrationResultItem> => {
+    return fetchJson<AgentOrchestrationResultItem>(`/deals/${dealId}/post-acquisition/analyze`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    });
+  },
+
+  createCustomerAccount: async (dealId: string, payload: any): Promise<CustomerAccountItem> => {
+    return fetchJson<CustomerAccountItem>(`/deals/${dealId}/post-acquisition/customers`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  createPostAcquisitionMetric: async (dealId: string, payload: any): Promise<PostAcquisitionMetricItem> => {
+    return fetchJson<PostAcquisitionMetricItem>(`/deals/${dealId}/post-acquisition/metrics`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  createAcquisitionThesis: async (dealId: string, payload: any): Promise<AcquisitionThesisItem> => {
+    return fetchJson<AcquisitionThesisItem>(`/deals/${dealId}/post-acquisition/thesis`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  createValueCreationInitiative: async (dealId: string, payload: any): Promise<ValueCreationInitiativeItem> => {
+    return fetchJson<ValueCreationInitiativeItem>(`/deals/${dealId}/post-acquisition/initiatives`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 export interface AgentMetadataItem {
@@ -938,13 +1005,19 @@ export interface AgentMetadataItem {
 export interface AgentAssessmentItem {
   agent_id: string;
   domain: string;
-  status: string;
+  status: 'SUCCESS' | 'PARTIAL' | 'INSUFFICIENT_EVIDENCE' | 'AGENT_UNAVAILABLE' | 'FAILED';
   summary: string;
   confidence: string;
   confidence_score: number;
   key_findings: any[];
-  positive_drivers?: string[];
-  negative_drivers?: string[];
+  positive_drivers: string[];
+  negative_drivers: string[];
+  unresolved_issues: string[];
+  required_diligence: string[];
+  data_gaps: string[];
+  metrics: Record<string, any>;
+  risks: any[];
+  recommendations: any[];
   citations: CopilotCitation[];
   tools_invoked: string[];
   execution_time_ms: number;
@@ -1041,5 +1114,145 @@ export interface PredictionResultItem {
   created_at: string;
 }
 
+// Post-Acquisition Types
+export interface CustomerAccountItem {
+  id: string;
+  deal_id: string;
+  account_name: string;
+  segment: string;
+  arr: number;
+  mrr: number;
+  churn_risk_score: number;
+  health_status: string;
+  nps?: number;
+  is_churned: boolean;
+  expansion_potential_usd: number;
+  industry?: string;
+  products_used?: string[];
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
 
+export interface PostAcquisitionMetricItem {
+  id: string;
+  deal_id: string;
+  fiscal_period: string;
+  metric_category: string;
+  metric_name: string;
+  baseline_value: number;
+  target_value: number;
+  actual_value: number;
+  variance_pct: number;
+  unit: string;
+  notes?: string;
+}
 
+export interface AcquisitionThesisItem {
+  id: string;
+  deal_id: string;
+  thesis_pillar: string;
+  target_metric: string;
+  baseline_value: number;
+  target_value: number;
+  actual_value?: number;
+  variance_pct?: number;
+  status: 'ON_TRACK' | 'AT_RISK' | 'OFF_TRACK' | 'INSUFFICIENT_DATA';
+  rationale?: string;
+}
+
+export interface ValueCreationInitiativeItem {
+  id: string;
+  deal_id: string;
+  pillar: string;
+  title: string;
+  description?: string;
+  owner?: string;
+  target_ebitda_impact: number;
+  realized_ebitda_impact: number;
+  status: string;
+  timeline_quarter: string;
+}
+
+export interface PostAcquisitionOverviewItem {
+  deal_id: string;
+  deal_title: string;
+  company_name: string;
+  overall_thesis_status: 'ON_TRACK' | 'AT_RISK' | 'OFF_TRACK' | 'INSUFFICIENT_DATA';
+  health_score: number;
+  total_arr: number;
+  nrr_pct?: number;
+  synergy_realization_pct?: number;
+  integration_completion_pct: number;
+  open_blockers_count: number;
+  at_risk_customers_count: number;
+  active_initiatives_count: number;
+  pillars: Record<string, any>;
+  key_highlights: string[];
+  top_risks: string[];
+}
+
+export interface PostAcquisitionPerformanceItem {
+  deal_id: string;
+  metrics: PostAcquisitionMetricItem[];
+  revenue_growth_pct?: number;
+  ebitda_margin_pct?: number;
+  historical_periods: string[];
+  data_gaps: string[];
+}
+
+export interface PostAcquisitionIntegrationItem {
+  deal_id: string;
+  program_name?: string;
+  total_milestones: number;
+  completed_milestones: number;
+  overdue_milestones: number;
+  critical_path_milestones: number;
+  completion_pct: number;
+  health_score: number;
+  open_blockers: Array<{ id: string; title: string; severity: string; impact?: string }>;
+  workstreams: Array<{ id: string; name: string; category: string; progress_pct: number }>;
+  data_gaps: string[];
+}
+
+export interface PostAcquisitionSynergiesItem {
+  deal_id: string;
+  total_expected_annual_synergy: number;
+  total_realized_annual_synergy: number;
+  realization_rate_pct?: number;
+  cost_synergies_realized: number;
+  revenue_synergies_realized: number;
+  opportunities_count: number;
+  realization_logs: Array<{ fiscal_period: string; planned_value: number; actual_value: number; variance: number }>;
+  data_gaps: string[];
+}
+
+export interface PostAcquisitionCustomersItem {
+  deal_id: string;
+  total_accounts: number;
+  total_arr: number;
+  average_churn_risk: number;
+  at_risk_arr: number;
+  at_risk_accounts: CustomerAccountItem[];
+  expansion_pipeline_usd: number;
+  nrr_pct?: number;
+  churn_rate_pct?: number;
+  data_gaps: string[];
+}
+
+export interface PostAcquisitionRisksItem {
+  deal_id: string;
+  total_risks_count: number;
+  critical_risks_count: number;
+  high_risks_count: number;
+  emerging_post_close_risks: Array<{ id: string; category: string; title: string; description: string; severity: string; score: number; mitigation?: string }>;
+  data_gaps: string[];
+}
+
+export interface PostAcquisitionThesisItem {
+  deal_id: string;
+  overall_status: 'ON_TRACK' | 'AT_RISK' | 'OFF_TRACK' | 'INSUFFICIENT_DATA';
+  theses: AcquisitionThesisItem[];
+  initiatives: ValueCreationInitiativeItem[];
+  data_gaps: string[];
+}

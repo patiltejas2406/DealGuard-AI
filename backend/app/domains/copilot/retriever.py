@@ -19,6 +19,12 @@ from app.domains.technology.models import (
     TechnologyFinding,
 )
 from app.domains.valuation.models import Valuation, ValuationAssumption
+from app.domains.post_deal.models import (
+    AcquisitionThesis,
+    CustomerAccount,
+    PostAcquisitionMetric,
+    ValueCreationInitiative,
+)
 
 
 class MultiDomainRetriever:
@@ -420,7 +426,68 @@ class MultiDomainRetriever:
                 )
                 context_sections.append(m_text)
 
-        # 11. Document Chunks Grounded Search
+        # 11. Post-Acquisition Operating, Customer & Thesis Domain
+        if "POST_ACQUISITION" in candidate_domains:
+            cust_q = (
+                select(CustomerAccount)
+                .where(
+                    CustomerAccount.deal_id == deal_id,
+                    CustomerAccount.organization_id == organization_id,
+                )
+                .limit(6)
+            )
+            cust_res = await self.session.execute(cust_q)
+            accounts = list(cust_res.scalars().all())
+
+            post_m_q = (
+                select(PostAcquisitionMetric)
+                .where(
+                    PostAcquisitionMetric.deal_id == deal_id,
+                    PostAcquisitionMetric.organization_id == organization_id,
+                )
+                .limit(6)
+            )
+            post_m_res = await self.session.execute(post_m_q)
+            post_metrics = list(post_m_res.scalars().all())
+
+            thesis_q = (
+                select(AcquisitionThesis)
+                .where(
+                    AcquisitionThesis.deal_id == deal_id,
+                    AcquisitionThesis.organization_id == organization_id,
+                )
+                .limit(6)
+            )
+            thesis_res = await self.session.execute(thesis_q)
+            theses = list(thesis_res.scalars().all())
+
+            if accounts or post_metrics or theses:
+                retrieved_domains.append("POST_ACQUISITION")
+                domain_data["post_acquisition"] = {
+                    "accounts_count": len(accounts),
+                    "total_arr": sum(a.arr for a in accounts),
+                    "metrics_count": len(post_metrics),
+                    "theses_count": len(theses),
+                }
+                pa_parts = ["Post-Acquisition Performance & Value Creation:"]
+                if post_metrics:
+                    for pm in post_metrics:
+                        pa_parts.append(
+                            f"- [{pm.fiscal_period}] {pm.metric_name}: Actual ${pm.actual_value:,.0f} vs Target ${pm.target_value:,.0f} (Variance: {pm.variance_pct:+.1f}%)"
+                        )
+                if accounts:
+                    at_risk = [a for a in accounts if a.health_status in ["AT_RISK", "CRITICAL"]]
+                    pa_parts.append(
+                        f"- Customer Portfolio: {len(accounts)} accounts totaling ${sum(a.arr for a in accounts):,.0f} ARR ({len(at_risk)} at elevated churn risk)"
+                    )
+                if theses:
+                    for th in theses:
+                        pa_parts.append(
+                            f"- Thesis [{th.thesis_pillar}]: {th.target_metric} -> Status: {th.status} (Target: {th.target_value:,.0f}, Actual: {th.actual_value:,.0f} if th.actual_value is not None else 'Pending')"
+                        )
+                context_sections.append("\n".join(pa_parts))
+
+        # 12. Document Chunks Grounded Search
         if "DOCUMENTS" in candidate_domains or not retrieved_domains:
             chunk_q = (
                 select(DocumentChunk)

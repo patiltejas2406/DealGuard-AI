@@ -48,6 +48,13 @@ from app.domains.ml.models import (
     MLPredictionRecord,
 )
 
+from app.domains.post_deal.models import (
+    CustomerAccount,
+    PostAcquisitionMetric,
+    AcquisitionThesis,
+    ValueCreationInitiative,
+)
+
 __all__ = [
     "Base",
     "BaseModel",
@@ -102,6 +109,10 @@ __all__ = [
     "MLTrainingRunRecord",
     "MLModelRecord",
     "MLPredictionRecord",
+    "CustomerAccount",
+    "PostAcquisitionMetric",
+    "AcquisitionThesis",
+    "ValueCreationInitiative",
 ]
 
 
