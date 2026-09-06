@@ -99,7 +99,7 @@ def test_real_world_multi_model_benchmarking_and_selection():
     assert wrapper is not None
     assert wrapper.metadata.model_id == "dealguard-test-real-credit-v1"
     assert wrapper.metadata.status == ModelStatus.VALIDATED
-    assert summary["winning_model"] in ["RandomForest", "XGBoost", "GradientBoosting", "LogisticRegression"]
+    assert summary["winning_model"] in ["RandomForest", "XGBoost", "GradientBoosting", "HistGradientBoosting", "ExtraTrees", "LogisticRegression"]
     assert len(summary["candidate_comparisons"]) >= 5
 
     # Check candidate comparison fields

@@ -345,27 +345,71 @@ class MLBenchmarkFramework:
                 row[f"{metric_key}_std"] = round(std_val, 4)
             cv_summary.append(row)
 
-        # 8. Documented Objective Selection Policy
+        # 8. Documented Objective Selection Policy (1-Standard-Error / Parsimony Rule)
         # Primary: Mean CV ROC-AUC
-        # Secondary: Lowest CV Brier Score (better calibration) & lower variance (std)
-        # 1-SE Rule: If a simpler model (e.g. LogisticRegression or RandomForest) is within 1 SE of top, prefer simpler
-        selection_policy = {
-            "policy_name": "ROC-AUC Primary with Brier Calibration & Parsimony Tie-Breaker",
-            "primary_metric": "auc_roc_mean",
-            "secondary_metric": "brier_score_mean",
-            "parsimony_rule": "Select candidate with highest mean CV ROC-AUC; prefer simpler architecture within 0.005 ROC-AUC margin.",
-        }
-
-        # Sort candidates primarily by auc_roc_mean descending, then brier_score_mean ascending
+        # Secondary: Lowest CV Brier Score (better calibration), lower variance (std), and PR-AUC
+        # 1-SE Rule: Any model within 1 Standard Error of the top ROC-AUC is statistically equivalent;
+        # among equivalent models, prefer lower Brier loss, lower variance, and simpler architecture.
         cv_summary.sort(
             key=lambda x: (x["auc_roc_mean"], -x["brier_score_mean"], -x["auc_roc_std"]),
             reverse=True,
         )
-        winning_candidate_summary = cv_summary[0]
-        winning_name = winning_candidate_summary["model_name"]
 
-        # Find instance of winning model base
+        top_candidate = cv_summary[0]
+        best_auc = top_candidate["auc_roc_mean"]
+        one_se = round(top_candidate["auc_roc_std"] / np.sqrt(n_cv_folds), 4)
+        se_threshold = round(best_auc - one_se, 4)
+
+        # Candidate models within 1-Standard-Error of the top ROC-AUC
+        statistically_equivalent = [
+            c for c in cv_summary if c["auc_roc_mean"] >= se_threshold
+        ]
+
+        # Model complexity order (simpler models preferred when performance difference is within 1 SE)
+        complexity_tier = {
+            "LogisticRegression": 1,
+            "RandomForest": 2,
+            "ExtraTrees": 3,
+            "HistGradientBoosting": 4,
+            "GradientBoosting": 5,
+            "XGBoost": 6,
+            "SVM": 7,
+        }
+
+        def parsimony_score(c: Dict[str, Any]) -> Tuple[float, float, float, int]:
+            # Lower brier score is better -> negative for reverse sort
+            # Lower variance (std) is better -> negative for reverse sort
+            # Higher PR-AUC is better -> positive
+            # Lower complexity tier is better -> negative
+            return (
+                -c["brier_score_mean"],
+                -c["auc_roc_std"],
+                c["pr_auc_mean"],
+                -complexity_tier.get(c["model_name"], 10),
+            )
+
+        if len(statistically_equivalent) > 1:
+            winning_candidate_summary = max(statistically_equivalent, key=parsimony_score)
+        else:
+            winning_candidate_summary = top_candidate
+
+        winning_name = winning_candidate_summary["model_name"]
         winning_base_model = next(c_model for c_name, c_model in candidates if c_name == winning_name)
+
+        selection_policy = {
+            "policy_name": "1-Standard-Error (1-SE) Parsimony Policy",
+            "primary_metric": "auc_roc_mean",
+            "top_candidate": top_candidate["model_name"],
+            "top_roc_auc": best_auc,
+            "one_standard_error": one_se,
+            "statistically_equivalent_models": [c["model_name"] for c in statistically_equivalent],
+            "selected_winner": winning_name,
+            "selection_rationale": (
+                f"{winning_name} selected under 1-SE rule (best AUC: {best_auc:.4f}, SE threshold: {se_threshold:.4f}) "
+                f"with superior calibration (Brier: {winning_candidate_summary['brier_score_mean']:.4f}) "
+                f"and lower variance (Std: {winning_candidate_summary['auc_roc_std']:.4f})."
+            ),
+        }
 
         # 9. Fit Preprocessor and Winning Estimator on ENTIRE Training Set (80%)
         final_train_preprocessor = TabularPreprocessor(snapshot.feature_definitions)
