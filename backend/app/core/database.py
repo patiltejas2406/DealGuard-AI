@@ -59,6 +59,10 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
     return _async_session_factory
 
 
+# Factory alias for background workers and task dispatchers
+async_session_factory = get_session_factory
+
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency yielding an async database session."""
     session_factory = get_session_factory()

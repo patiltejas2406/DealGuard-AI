@@ -988,6 +988,49 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+
+  // External Telemetry & System Integrations
+  getTelemetryCatalog: async (): Promise<ConnectorMetadataItem[]> => {
+    return fetchJson<ConnectorMetadataItem[]>('/telemetry/catalog');
+  },
+
+  getTelemetryConnections: async (dealId: string): Promise<ExternalConnectionItem[]> => {
+    return fetchJson<ExternalConnectionItem[]>(`/deals/${dealId}/telemetry/connections`);
+  },
+
+  createTelemetryConnection: async (
+    dealId: string,
+    payload: {
+      provider: string;
+      connection_name: string;
+      credentials: Record<string, string>;
+      sync_frequency_minutes?: number;
+    }
+  ): Promise<ExternalConnectionItem> => {
+    return fetchJson<ExternalConnectionItem>(`/deals/${dealId}/telemetry/connections`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  triggerTelemetrySync: async (
+    dealId: string,
+    connectionId: string,
+    incremental: boolean = true
+  ): Promise<SyncRunItem> => {
+    return fetchJson<SyncRunItem>(
+      `/deals/${dealId}/telemetry/connections/${connectionId}/sync?incremental=${incremental}`,
+      { method: 'POST' }
+    );
+  },
+
+  getTelemetrySummary: async (dealId: string): Promise<TelemetrySummaryItem> => {
+    return fetchJson<TelemetrySummaryItem>(`/deals/${dealId}/telemetry/summary`);
+  },
+
+  getTelemetryChanges: async (dealId: string, limit: number = 50): Promise<TelemetryChangeItem[]> => {
+    return fetchJson<TelemetryChangeItem[]>(`/deals/${dealId}/telemetry/changes?limit=${limit}`);
+  },
 };
 
 export interface AgentMetadataItem {
@@ -1256,3 +1299,81 @@ export interface PostAcquisitionThesisItem {
   initiatives: ValueCreationInitiativeItem[];
   data_gaps: string[];
 }
+
+export interface ConnectorMetadataItem {
+  provider: string;
+  display_name: string;
+  description: string;
+  category: string;
+  icon_slug: string;
+  is_active: boolean;
+  required_credential_fields: string[];
+  supported_object_types: string[];
+  documentation_url: string;
+  compliance_badge?: string;
+  is_live_verified: boolean;
+  verification_notes?: string;
+}
+
+export interface ExternalConnectionItem {
+  id: string;
+  deal_id: string;
+  organization_id: string;
+  provider: string;
+  connection_name: string;
+  status: 'ACTIVE' | 'ERROR' | 'PAUSED' | 'DISCONNECTED';
+  auth_status: 'AUTHENTICATED' | 'EXPIRED' | 'REVOKED' | 'UNAUTHENTICATED';
+  is_active: boolean;
+  last_sync_at?: string;
+  next_sync_at?: string;
+  sync_frequency_minutes: number;
+  data_freshness_status: 'LIVE' | 'RECENT' | 'STALE' | 'OFFLINE' | 'UNKNOWN';
+  total_records_synced: number;
+  error_message?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface SyncRunItem {
+  id: string;
+  connection_id: string;
+  deal_id: string;
+  organization_id: string;
+  status: 'QUEUED' | 'RUNNING' | 'SUCCESS' | 'PARTIAL' | 'FAILED';
+  is_incremental: boolean;
+  started_at: string;
+  completed_at?: string;
+  duration_ms?: number;
+  records_extracted: number;
+  records_loaded: number;
+  records_failed: number;
+  error_message?: string;
+}
+
+export interface TelemetrySummaryItem {
+  deal_id: string;
+  active_connections: number;
+  total_customers: number;
+  total_arr: number;
+  total_revenue_events: number;
+  total_pipeline_value: number;
+  total_expenses: number;
+  last_sync_at?: string;
+  freshness: string;
+  data_gaps: string[];
+}
+
+export interface TelemetryChangeItem {
+  id: string;
+  deal_id: string;
+  source_provider: string;
+  entity_type: string;
+  entity_name?: string;
+  metric_name: string;
+  previous_value?: number;
+  new_value?: number;
+  delta_percentage?: number;
+  event_type: string;
+  detected_at: string;
+}
+

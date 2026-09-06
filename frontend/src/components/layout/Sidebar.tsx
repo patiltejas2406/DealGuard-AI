@@ -18,6 +18,7 @@ import {
   FileCheck2,
   Terminal,
   Network,
+  Server,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   { name: 'What-If Simulator', icon: Sliders, href: '/scenarios', badge: 'Monte Carlo' },
   { name: 'Value Creation', icon: Sparkles, href: '/synergies', badge: 'Waterfall' },
   { name: '100-Day Integration', icon: Calendar, href: '/integration', badge: 'Execution' },
+  { name: 'Telemetry & Systems', icon: Server, href: '/telemetry', badge: 'Continuous' },
   { name: 'Legal & Contracts', icon: Scale, href: '/legal', badge: 'Evidence' },
   { name: 'Tech & Architecture', icon: Cpu, href: '/technology', badge: 'Architecture' },
   { name: 'AI Deal Copilot', icon: Bot, href: '/copilot', badge: 'Streaming' },

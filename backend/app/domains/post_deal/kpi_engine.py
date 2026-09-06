@@ -236,3 +236,63 @@ class PostDealKPIEngine:
             "overall_status": overall_status,
             "pillars": pillars,
         }
+
+    @classmethod
+    def compute_kpis_from_telemetry(
+        cls,
+        customers: List[Any],
+        opportunities: List[Any],
+        revenue_events: List[Any],
+        expenses: List[Any],
+    ) -> Dict[str, Any]:
+        """
+        Compute authoritative deterministic financial and operational KPIs directly from canonical telemetry.
+        Never relies on LLMs for arithmetic.
+        """
+        # 1. Customers & ARR
+        total_customers = len(customers)
+        retained_customers = sum(1 for c in customers if not getattr(c, "is_churned", False))
+        total_arr = sum(float(getattr(c, "arr_usd", 0.0) or 0.0) for c in customers)
+        total_expansion = sum(float(getattr(c, "expansion_potential_usd", 0.0) or 0.0) for c in customers)
+        churned_arr = sum(float(getattr(c, "arr_usd", 0.0) or 0.0) for c in customers if getattr(c, "is_churned", False))
+
+        logo_retention = cls.compute_customer_retention_pct(retained_customers, total_customers)
+        nrr = cls.compute_net_revenue_retention_pct(
+            starting_arr=total_arr,
+            expansion_arr=total_expansion,
+            churned_arr=churned_arr,
+        )
+
+        # 2. Pipeline & Opportunities
+        open_opps = [o for o in opportunities if not getattr(o, "is_closed", False)]
+        pipeline_value = sum(float(getattr(o, "amount_usd", 0.0) or 0.0) for o in open_opps)
+        weighted_pipeline = sum(float(getattr(o, "expected_revenue_usd", 0.0) or 0.0) for o in open_opps)
+        won_opps = [o for o in opportunities if getattr(o, "is_won", False)]
+        closed_opps = [o for o in opportunities if getattr(o, "is_closed", False)]
+        win_rate = round((len(won_opps) / len(closed_opps) * 100.0), 2) if closed_opps else None
+
+        # 3. Realized Invoices & Expenses
+        paid_revenues = [r for r in revenue_events if getattr(r, "status", "") == "PAID"]
+        realized_revenue = sum(float(getattr(r, "amount_usd", 0.0) or 0.0) for r in paid_revenues)
+        realized_expenses = sum(float(getattr(e, "amount_usd", 0.0) or 0.0) for e in expenses)
+        realized_ebitda = round(realized_revenue - realized_expenses, 2)
+        ebitda_margin = cls.compute_ebitda_margin_pct(realized_ebitda, realized_revenue)
+
+        return {
+            "total_customers": total_customers,
+            "retained_customers": retained_customers,
+            "logo_retention_pct": logo_retention,
+            "total_contractual_arr": round(total_arr, 2),
+            "expansion_potential_arr": round(total_expansion, 2),
+            "net_revenue_retention_pct": nrr,
+            "open_pipeline_count": len(open_opps),
+            "total_pipeline_value_usd": round(pipeline_value, 2),
+            "weighted_pipeline_usd": round(weighted_pipeline, 2),
+            "pipeline_win_rate_pct": win_rate,
+            "realized_revenue_usd": round(realized_revenue, 2),
+            "realized_expenses_usd": round(realized_expenses, 2),
+            "realized_ebitda_usd": realized_ebitda,
+            "ebitda_margin_pct": ebitda_margin,
+            "is_deterministic": True,
+        }
+

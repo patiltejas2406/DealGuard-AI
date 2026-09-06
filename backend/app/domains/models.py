@@ -39,6 +39,7 @@ from app.domains.copilot.models import (
     CopilotConversation,
     CopilotMessage,
 )
+from app.domains.jobs.models import JobExecution
 from app.domains.audit.models import AuditEvent, HumanReview
 from app.domains.agents.models import AgentExecution, AgentAssessmentRecord
 from app.domains.ml.models import (
@@ -53,6 +54,17 @@ from app.domains.post_deal.models import (
     PostAcquisitionMetric,
     AcquisitionThesis,
     ValueCreationInitiative,
+)
+from app.domains.telemetry.models import (
+    ExternalConnection,
+    ExternalObjectMapping,
+    SyncRun,
+    SyncCheckpoint,
+    BusinessCustomer,
+    BusinessOpportunity,
+    BusinessRevenueEvent,
+    BusinessExpense,
+    BusinessTelemetryChange,
 )
 
 __all__ = [
@@ -113,6 +125,15 @@ __all__ = [
     "PostAcquisitionMetric",
     "AcquisitionThesis",
     "ValueCreationInitiative",
+    "ExternalConnection",
+    "ExternalObjectMapping",
+    "SyncRun",
+    "SyncCheckpoint",
+    "BusinessCustomer",
+    "BusinessOpportunity",
+    "BusinessRevenueEvent",
+    "BusinessExpense",
+    "BusinessTelemetryChange",
 ]
 
 

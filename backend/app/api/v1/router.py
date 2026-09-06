@@ -21,6 +21,7 @@ from app.api.v1.endpoints import (
     synergies,
     system,
     technology,
+    telemetry,
     valuation,
 )
 
@@ -51,6 +52,7 @@ api_router.include_router(copilot.router)
 api_router.include_router(agents.router)
 api_router.include_router(ml.router)
 api_router.include_router(post_acquisition.router)
+api_router.include_router(telemetry.router)
 
 
 
