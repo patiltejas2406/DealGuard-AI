@@ -37,9 +37,9 @@ class ModelMetadata(BaseModel):
     training_dataset_id: Optional[str] = None
     feature_names: List[str] = Field(default_factory=list)
     hyperparameters: Dict[str, Any] = Field(default_factory=dict)
-    evaluation_metrics: Dict[str, float] = Field(
+    evaluation_metrics: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Validated evaluation metrics (e.g. RMSE, R2, AUC-ROC, F1, MAE)."
+        description="Validated evaluation metrics (e.g. RMSE, R2, AUC-ROC, F1, MAE, Confusion Matrix)."
     )
     status: ModelStatus = ModelStatus.REGISTERED
     created_at: datetime = Field(default_factory=datetime.utcnow)

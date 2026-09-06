@@ -1,0 +1,806 @@
+{
+  "report_version": "1.0.0",
+  "report_name": "DealGuard AI IEEE-Grade Research Benchmark Report",
+  "generated_at": "2026-09-06T10:14:34.826827+00:00",
+  "environment": {
+    "git_commit": "c05b598d999c243dcf24aa9460cd777f3b7dc855",
+    "library_versions": {
+      "sklearn": "1.5.2",
+      "xgboost": "2.1.4",
+      "shap": "0.47.2",
+      "scipy": "1.18.0",
+      "numpy": "2.2.3",
+      "pandas": "2.2.3"
+    },
+    "excluded_candidates": {
+      "LightGBM": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. HistGradientBoosting provides equivalent histogram-based tree boosting.",
+      "CatBoost": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. XGBoost and HistGradientBoosting provide equivalent gradient boosted tree ensembles."
+    }
+  },
+  "benchmarks": [
+    {
+      "benchmark_id": "bm-0bd173a0",
+      "dataset_id": "dealguard-real-churn-v1",
+      "dataset_name": "Real-World Customer Churn Dataset",
+      "dataset_checksum": "733ebe4499b5274052012d5115a8cb190b437b85ec04d0d98e809c7efbe83f7b",
+      "random_seed": 42,
+      "git_commit": "c05b598d999c243dcf24aa9460cd777f3b7dc855",
+      "library_versions": {
+        "sklearn": "1.5.2",
+        "xgboost": "2.1.4",
+        "shap": "0.47.2",
+        "scipy": "1.18.0",
+        "numpy": "2.2.3",
+        "pandas": "2.2.3"
+      },
+      "excluded_candidates": {
+        "LightGBM": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. HistGradientBoosting provides equivalent histogram-based tree boosting.",
+        "CatBoost": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. XGBoost and HistGradientBoosting provide equivalent gradient boosted tree ensembles."
+      },
+      "sample_counts": {
+        "total_samples": 7043,
+        "train_samples": 5634,
+        "test_samples": 1409,
+        "feature_count": 19,
+        "class_distribution_overall": {
+          "class_0": 5174,
+          "class_1": 1869
+        },
+        "class_distribution_train": {
+          "class_0": 4139,
+          "class_1": 1495
+        },
+        "class_distribution_test": {
+          "class_0": 1035,
+          "class_1": 374
+        }
+      },
+      "cv_summary": [
+        {
+          "model_name": "GradientBoosting",
+          "auc_roc_mean": 0.8487,
+          "auc_roc_std": 0.0114,
+          "pr_auc_mean": 0.6677,
+          "pr_auc_std": 0.0215,
+          "f1_score_mean": 0.5719,
+          "f1_score_std": 0.0289,
+          "precision_mean": 0.68,
+          "precision_std": 0.0301,
+          "recall_mean": 0.4937,
+          "recall_std": 0.0292,
+          "balanced_accuracy_mean": 0.7049,
+          "balanced_accuracy_std": 0.0172,
+          "log_loss_mean": 0.4152,
+          "log_loss_std": 0.0106,
+          "brier_score_mean": 0.1344,
+          "brier_score_std": 0.0046
+        },
+        {
+          "model_name": "HistGradientBoosting",
+          "auc_roc_mean": 0.8485,
+          "auc_roc_std": 0.0098,
+          "pr_auc_mean": 0.6691,
+          "pr_auc_std": 0.0215,
+          "f1_score_mean": 0.5776,
+          "f1_score_std": 0.0294,
+          "precision_mean": 0.669,
+          "precision_std": 0.032,
+          "recall_mean": 0.5084,
+          "recall_std": 0.0297,
+          "balanced_accuracy_mean": 0.7088,
+          "balanced_accuracy_std": 0.0179,
+          "log_loss_mean": 0.4128,
+          "log_loss_std": 0.0094,
+          "brier_score_mean": 0.134,
+          "brier_score_std": 0.0041
+        },
+        {
+          "model_name": "XGBoost",
+          "auc_roc_mean": 0.8483,
+          "auc_roc_std": 0.0115,
+          "pr_auc_mean": 0.6652,
+          "pr_auc_std": 0.0242,
+          "f1_score_mean": 0.5675,
+          "f1_score_std": 0.0218,
+          "precision_mean": 0.6756,
+          "precision_std": 0.0256,
+          "recall_mean": 0.4896,
+          "recall_std": 0.0239,
+          "balanced_accuracy_mean": 0.7023,
+          "balanced_accuracy_std": 0.0129,
+          "log_loss_mean": 0.4147,
+          "log_loss_std": 0.0102,
+          "brier_score_mean": 0.1346,
+          "brier_score_std": 0.0047
+        },
+        {
+          "model_name": "LogisticRegression",
+          "auc_roc_mean": 0.8447,
+          "auc_roc_std": 0.0118,
+          "pr_auc_mean": 0.6604,
+          "pr_auc_std": 0.0218,
+          "f1_score_mean": 0.5941,
+          "f1_score_std": 0.0286,
+          "precision_mean": 0.6519,
+          "precision_std": 0.0221,
+          "recall_mean": 0.5465,
+          "recall_std": 0.0385,
+          "balanced_accuracy_mean": 0.7206,
+          "balanced_accuracy_std": 0.019,
+          "log_loss_mean": 0.4185,
+          "log_loss_std": 0.0118,
+          "brier_score_mean": 0.1357,
+          "brier_score_std": 0.005
+        },
+        {
+          "model_name": "RandomForest",
+          "auc_roc_mean": 0.8447,
+          "auc_roc_std": 0.0085,
+          "pr_auc_mean": 0.6593,
+          "pr_auc_std": 0.0153,
+          "f1_score_mean": 0.5304,
+          "f1_score_std": 0.0186,
+          "precision_mean": 0.6751,
+          "precision_std": 0.0259,
+          "recall_mean": 0.4375,
+          "recall_std": 0.0219,
+          "balanced_accuracy_mean": 0.6806,
+          "balanced_accuracy_std": 0.0105,
+          "log_loss_mean": 0.4222,
+          "log_loss_std": 0.0057,
+          "brier_score_mean": 0.1371,
+          "brier_score_std": 0.0027
+        },
+        {
+          "model_name": "ExtraTrees",
+          "auc_roc_mean": 0.8404,
+          "auc_roc_std": 0.0095,
+          "pr_auc_mean": 0.6466,
+          "pr_auc_std": 0.0147,
+          "f1_score_mean": 0.4938,
+          "f1_score_std": 0.0239,
+          "precision_mean": 0.7004,
+          "precision_std": 0.0259,
+          "recall_mean": 0.3819,
+          "recall_std": 0.0258,
+          "balanced_accuracy_mean": 0.6614,
+          "balanced_accuracy_std": 0.0121,
+          "log_loss_mean": 0.4337,
+          "log_loss_std": 0.0053,
+          "brier_score_mean": 0.1415,
+          "brier_score_std": 0.0024
+        }
+      ],
+      "selection_policy": {
+        "policy_name": "ROC-AUC Primary with Brier Calibration & Parsimony Tie-Breaker",
+        "primary_metric": "auc_roc_mean",
+        "secondary_metric": "brier_score_mean",
+        "parsimony_rule": "Select candidate with highest mean CV ROC-AUC; prefer simpler architecture within 0.005 ROC-AUC margin."
+      },
+      "winning_model_name": "GradientBoosting",
+      "winning_cv_metrics": {
+        "model_name": "GradientBoosting",
+        "auc_roc_mean": 0.8487,
+        "auc_roc_std": 0.0114,
+        "pr_auc_mean": 0.6677,
+        "pr_auc_std": 0.0215,
+        "f1_score_mean": 0.5719,
+        "f1_score_std": 0.0289,
+        "precision_mean": 0.68,
+        "precision_std": 0.0301,
+        "recall_mean": 0.4937,
+        "recall_std": 0.0292,
+        "balanced_accuracy_mean": 0.7049,
+        "balanced_accuracy_std": 0.0172,
+        "log_loss_mean": 0.4152,
+        "log_loss_std": 0.0106,
+        "brier_score_mean": 0.1344,
+        "brier_score_std": 0.0046
+      },
+      "calibration_results": {
+        "uncalibrated_brier": 0.135,
+        "sigmoid_brier": 0.1269,
+        "isotonic_brier": 0.1256,
+        "selected_calibration": "ISOTONIC",
+        "training_brier_improvement_pct": 6.96
+      },
+      "final_test_metrics": {
+        "accuracy": 0.8084,
+        "precision": 0.6806,
+        "recall": 0.5241,
+        "f1_score": 0.5921,
+        "balanced_accuracy": 0.7176,
+        "true_negatives": 943,
+        "false_positives": 92,
+        "false_negatives": 178,
+        "true_positives": 196,
+        "confusion_matrix": {
+          "tn": 943,
+          "fp": 92,
+          "fn": 178,
+          "tp": 196
+        },
+        "auc_roc": 0.8445,
+        "pr_auc": 0.6511,
+        "brier_score": 0.136,
+        "log_loss": 0.4183,
+        "calibration_curve": {
+          "prob_true": [
+            0.0857,
+            0.2451,
+            0.5,
+            0.7303,
+            0.7969
+          ],
+          "prob_pred": [
+            0.0678,
+            0.2917,
+            0.5019,
+            0.6834,
+            0.8697
+          ]
+        },
+        "baseline_accuracy": 0.7346,
+        "lift_over_baseline_pct": 10.05
+      },
+      "confusion_matrix": {
+        "tn": 943,
+        "fp": 92,
+        "fn": 178,
+        "tp": 196
+      },
+      "test_calibration_curve": {
+        "prob_true": [
+          0.0857,
+          0.2451,
+          0.5,
+          0.7303,
+          0.7969
+        ],
+        "prob_pred": [
+          0.0678,
+          0.2917,
+          0.5019,
+          0.6834,
+          0.8697
+        ]
+      },
+      "started_at": "2026-09-06T10:13:49.981471+00:00",
+      "completed_at": "2026-09-06T10:13:55.326642+00:00"
+    },
+    {
+      "benchmark_id": "bm-45ce0219",
+      "dataset_id": "dealguard-real-credit-risk-v1",
+      "dataset_name": "German Credit Risk & Downside Default Dataset",
+      "dataset_checksum": "910066d49f2579fbe0364eea6a7cd47dbd26da63d20efaf6535e50ba8ef44d0b",
+      "random_seed": 42,
+      "git_commit": "c05b598d999c243dcf24aa9460cd777f3b7dc855",
+      "library_versions": {
+        "sklearn": "1.5.2",
+        "xgboost": "2.1.4",
+        "shap": "0.47.2",
+        "scipy": "1.18.0",
+        "numpy": "2.2.3",
+        "pandas": "2.2.3"
+      },
+      "excluded_candidates": {
+        "LightGBM": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. HistGradientBoosting provides equivalent histogram-based tree boosting.",
+        "CatBoost": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. XGBoost and HistGradientBoosting provide equivalent gradient boosted tree ensembles."
+      },
+      "sample_counts": {
+        "total_samples": 1000,
+        "train_samples": 800,
+        "test_samples": 200,
+        "feature_count": 20,
+        "class_distribution_overall": {
+          "class_0": 700,
+          "class_1": 300
+        },
+        "class_distribution_train": {
+          "class_0": 560,
+          "class_1": 240
+        },
+        "class_distribution_test": {
+          "class_0": 140,
+          "class_1": 60
+        }
+      },
+      "cv_summary": [
+        {
+          "model_name": "RandomForest",
+          "auc_roc_mean": 0.7718,
+          "auc_roc_std": 0.0412,
+          "pr_auc_mean": 0.5939,
+          "pr_auc_std": 0.0605,
+          "f1_score_mean": 0.2454,
+          "f1_score_std": 0.0533,
+          "precision_mean": 0.6871,
+          "precision_std": 0.0872,
+          "recall_mean": 0.15,
+          "recall_std": 0.0358,
+          "balanced_accuracy_mean": 0.5607,
+          "balanced_accuracy_std": 0.02,
+          "log_loss_mean": 0.5227,
+          "log_loss_std": 0.02,
+          "brier_score_mean": 0.1743,
+          "brier_score_std": 0.0085
+        },
+        {
+          "model_name": "HistGradientBoosting",
+          "auc_roc_mean": 0.7686,
+          "auc_roc_std": 0.0478,
+          "pr_auc_mean": 0.5863,
+          "pr_auc_std": 0.0666,
+          "f1_score_mean": 0.491,
+          "f1_score_std": 0.0476,
+          "precision_mean": 0.6361,
+          "precision_std": 0.0612,
+          "recall_mean": 0.4,
+          "recall_std": 0.0404,
+          "balanced_accuracy_mean": 0.6509,
+          "balanced_accuracy_std": 0.028,
+          "log_loss_mean": 0.5161,
+          "log_loss_std": 0.0428,
+          "brier_score_mean": 0.1715,
+          "brier_score_std": 0.0155
+        },
+        {
+          "model_name": "XGBoost",
+          "auc_roc_mean": 0.7682,
+          "auc_roc_std": 0.0471,
+          "pr_auc_mean": 0.5777,
+          "pr_auc_std": 0.0489,
+          "f1_score_mean": 0.4525,
+          "f1_score_std": 0.0414,
+          "precision_mean": 0.6344,
+          "precision_std": 0.062,
+          "recall_mean": 0.3542,
+          "recall_std": 0.0437,
+          "balanced_accuracy_mean": 0.6325,
+          "balanced_accuracy_std": 0.0228,
+          "log_loss_mean": 0.5158,
+          "log_loss_std": 0.0347,
+          "brier_score_mean": 0.1717,
+          "brier_score_std": 0.0126
+        },
+        {
+          "model_name": "GradientBoosting",
+          "auc_roc_mean": 0.7654,
+          "auc_roc_std": 0.0399,
+          "pr_auc_mean": 0.5718,
+          "pr_auc_std": 0.0424,
+          "f1_score_mean": 0.4483,
+          "f1_score_std": 0.0815,
+          "precision_mean": 0.6378,
+          "precision_std": 0.0664,
+          "recall_mean": 0.35,
+          "recall_std": 0.0878,
+          "balanced_accuracy_mean": 0.633,
+          "balanced_accuracy_std": 0.0439,
+          "log_loss_mean": 0.5214,
+          "log_loss_std": 0.0287,
+          "brier_score_mean": 0.1735,
+          "brier_score_std": 0.0112
+        },
+        {
+          "model_name": "ExtraTrees",
+          "auc_roc_mean": 0.7649,
+          "auc_roc_std": 0.0513,
+          "pr_auc_mean": 0.579,
+          "pr_auc_std": 0.0675,
+          "f1_score_mean": 0.0918,
+          "f1_score_std": 0.0282,
+          "precision_mean": 0.6467,
+          "precision_std": 0.204,
+          "recall_mean": 0.05,
+          "recall_std": 0.0166,
+          "balanced_accuracy_mean": 0.5178,
+          "balanced_accuracy_std": 0.0087,
+          "log_loss_mean": 0.5415,
+          "log_loss_std": 0.0177,
+          "brier_score_mean": 0.1815,
+          "brier_score_std": 0.0075
+        },
+        {
+          "model_name": "LogisticRegression",
+          "auc_roc_mean": 0.7249,
+          "auc_roc_std": 0.0271,
+          "pr_auc_mean": 0.5449,
+          "pr_auc_std": 0.0327,
+          "f1_score_mean": 0.4015,
+          "f1_score_std": 0.069,
+          "precision_mean": 0.5533,
+          "precision_std": 0.0693,
+          "recall_mean": 0.3208,
+          "recall_std": 0.0764,
+          "balanced_accuracy_mean": 0.6042,
+          "balanced_accuracy_std": 0.0355,
+          "log_loss_mean": 0.5427,
+          "log_loss_std": 0.0198,
+          "brier_score_mean": 0.1833,
+          "brier_score_std": 0.007
+        },
+        {
+          "model_name": "SVM",
+          "auc_roc_mean": 0.7141,
+          "auc_roc_std": 0.0221,
+          "pr_auc_mean": 0.5321,
+          "pr_auc_std": 0.0259,
+          "f1_score_mean": 0.324,
+          "f1_score_std": 0.0733,
+          "precision_mean": 0.5754,
+          "precision_std": 0.0972,
+          "recall_mean": 0.2292,
+          "recall_std": 0.0632,
+          "balanced_accuracy_mean": 0.578,
+          "balanced_accuracy_std": 0.0309,
+          "log_loss_mean": 0.5462,
+          "log_loss_std": 0.0115,
+          "brier_score_mean": 0.1842,
+          "brier_score_std": 0.0043
+        }
+      ],
+      "selection_policy": {
+        "policy_name": "ROC-AUC Primary with Brier Calibration & Parsimony Tie-Breaker",
+        "primary_metric": "auc_roc_mean",
+        "secondary_metric": "brier_score_mean",
+        "parsimony_rule": "Select candidate with highest mean CV ROC-AUC; prefer simpler architecture within 0.005 ROC-AUC margin."
+      },
+      "winning_model_name": "RandomForest",
+      "winning_cv_metrics": {
+        "model_name": "RandomForest",
+        "auc_roc_mean": 0.7718,
+        "auc_roc_std": 0.0412,
+        "pr_auc_mean": 0.5939,
+        "pr_auc_std": 0.0605,
+        "f1_score_mean": 0.2454,
+        "f1_score_std": 0.0533,
+        "precision_mean": 0.6871,
+        "precision_std": 0.0872,
+        "recall_mean": 0.15,
+        "recall_std": 0.0358,
+        "balanced_accuracy_mean": 0.5607,
+        "balanced_accuracy_std": 0.02,
+        "log_loss_mean": 0.5227,
+        "log_loss_std": 0.02,
+        "brier_score_mean": 0.1743,
+        "brier_score_std": 0.0085
+      },
+      "calibration_results": {
+        "uncalibrated_brier": 0.1763,
+        "sigmoid_brier": 0.1225,
+        "isotonic_brier": 0.1166,
+        "selected_calibration": "ISOTONIC",
+        "training_brier_improvement_pct": 33.86
+      },
+      "final_test_metrics": {
+        "accuracy": 0.765,
+        "precision": 0.6327,
+        "recall": 0.5167,
+        "f1_score": 0.5688,
+        "balanced_accuracy": 0.694,
+        "true_negatives": 122,
+        "false_positives": 18,
+        "false_negatives": 29,
+        "true_positives": 31,
+        "confusion_matrix": {
+          "tn": 122,
+          "fp": 18,
+          "fn": 29,
+          "tp": 31
+        },
+        "auc_roc": 0.7916,
+        "pr_auc": 0.6142,
+        "brier_score": 0.1632,
+        "log_loss": 0.4957,
+        "calibration_curve": {
+          "prob_true": [
+            0.0769,
+            0.2708,
+            0.5,
+            0.6667,
+            0.8
+          ],
+          "prob_pred": [
+            0.1103,
+            0.2829,
+            0.4872,
+            0.6829,
+            0.854
+          ]
+        },
+        "baseline_accuracy": 0.7,
+        "lift_over_baseline_pct": 9.29
+      },
+      "confusion_matrix": {
+        "tn": 122,
+        "fp": 18,
+        "fn": 29,
+        "tp": 31
+      },
+      "test_calibration_curve": {
+        "prob_true": [
+          0.0769,
+          0.2708,
+          0.5,
+          0.6667,
+          0.8
+        ],
+        "prob_pred": [
+          0.1103,
+          0.2829,
+          0.4872,
+          0.6829,
+          0.854
+        ]
+      },
+      "started_at": "2026-09-06T10:13:55.327197+00:00",
+      "completed_at": "2026-09-06T10:13:56.979102+00:00"
+    },
+    {
+      "benchmark_id": "bm-5a54c68e",
+      "dataset_id": "dealguard-real-downside-risk-v1",
+      "dataset_name": "U.S. SBA Commercial Loan Default Dataset",
+      "dataset_checksum": "6040ff0419a0b1901c495a15abf03a9c7336d3bf986e0ee871b1d256d83c3c52",
+      "random_seed": 42,
+      "git_commit": "c05b598d999c243dcf24aa9460cd777f3b7dc855",
+      "library_versions": {
+        "sklearn": "1.5.2",
+        "xgboost": "2.1.4",
+        "shap": "0.47.2",
+        "scipy": "1.18.0",
+        "numpy": "2.2.3",
+        "pandas": "2.2.3"
+      },
+      "excluded_candidates": {
+        "LightGBM": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. HistGradientBoosting provides equivalent histogram-based tree boosting.",
+        "CatBoost": "Excluded due to lack of precompiled native wheels in Python 3.13 macOS ARM64 environment. XGBoost and HistGradientBoosting provide equivalent gradient boosted tree ensembles."
+      },
+      "sample_counts": {
+        "total_samples": 2499,
+        "train_samples": 1999,
+        "test_samples": 500,
+        "feature_count": 7,
+        "class_distribution_overall": {
+          "class_0": 2090,
+          "class_1": 409
+        },
+        "class_distribution_train": {
+          "class_0": 1672,
+          "class_1": 327
+        },
+        "class_distribution_test": {
+          "class_0": 418,
+          "class_1": 82
+        }
+      },
+      "cv_summary": [
+        {
+          "model_name": "XGBoost",
+          "auc_roc_mean": 0.7672,
+          "auc_roc_std": 0.0163,
+          "pr_auc_mean": 0.3681,
+          "pr_auc_std": 0.0338,
+          "f1_score_mean": 0.0973,
+          "f1_score_std": 0.0331,
+          "precision_mean": 0.3407,
+          "precision_std": 0.0561,
+          "recall_mean": 0.0582,
+          "recall_std": 0.0227,
+          "balanced_accuracy_mean": 0.5177,
+          "balanced_accuracy_std": 0.0079,
+          "log_loss_mean": 0.3782,
+          "log_loss_std": 0.008,
+          "brier_score_mean": 0.1175,
+          "brier_score_std": 0.0031
+        },
+        {
+          "model_name": "RandomForest",
+          "auc_roc_mean": 0.767,
+          "auc_roc_std": 0.01,
+          "pr_auc_mean": 0.3953,
+          "pr_auc_std": 0.0295,
+          "f1_score_mean": 0.0852,
+          "f1_score_std": 0.0555,
+          "precision_mean": 0.3917,
+          "precision_std": 0.0972,
+          "recall_mean": 0.0491,
+          "recall_std": 0.0343,
+          "balanced_accuracy_mean": 0.5182,
+          "balanced_accuracy_std": 0.0148,
+          "log_loss_mean": 0.3751,
+          "log_loss_std": 0.0053,
+          "brier_score_mean": 0.116,
+          "brier_score_std": 0.0018
+        },
+        {
+          "model_name": "HistGradientBoosting",
+          "auc_roc_mean": 0.7655,
+          "auc_roc_std": 0.0153,
+          "pr_auc_mean": 0.3833,
+          "pr_auc_std": 0.0338,
+          "f1_score_mean": 0.1898,
+          "f1_score_std": 0.0528,
+          "precision_mean": 0.4795,
+          "precision_std": 0.0825,
+          "recall_mean": 0.1193,
+          "recall_std": 0.0368,
+          "balanced_accuracy_mean": 0.5474,
+          "balanced_accuracy_std": 0.0174,
+          "log_loss_mean": 0.3796,
+          "log_loss_std": 0.0132,
+          "brier_score_mean": 0.1174,
+          "brier_score_std": 0.0042
+        },
+        {
+          "model_name": "GradientBoosting",
+          "auc_roc_mean": 0.7596,
+          "auc_roc_std": 0.0149,
+          "pr_auc_mean": 0.3645,
+          "pr_auc_std": 0.0463,
+          "f1_score_mean": 0.1305,
+          "f1_score_std": 0.0375,
+          "precision_mean": 0.4065,
+          "precision_std": 0.1511,
+          "recall_mean": 0.0795,
+          "recall_std": 0.0243,
+          "balanced_accuracy_mean": 0.5266,
+          "balanced_accuracy_std": 0.0136,
+          "log_loss_mean": 0.3806,
+          "log_loss_std": 0.0106,
+          "brier_score_mean": 0.1188,
+          "brier_score_std": 0.0045
+        },
+        {
+          "model_name": "ExtraTrees",
+          "auc_roc_mean": 0.7301,
+          "auc_roc_std": 0.0131,
+          "pr_auc_mean": 0.3547,
+          "pr_auc_std": 0.0122,
+          "f1_score_mean": 0.012,
+          "f1_score_std": 0.0146,
+          "precision_mean": 0.3,
+          "precision_std": 0.4,
+          "recall_mean": 0.0061,
+          "recall_std": 0.0075,
+          "balanced_accuracy_mean": 0.5028,
+          "balanced_accuracy_std": 0.0034,
+          "log_loss_mean": 0.4065,
+          "log_loss_std": 0.0028,
+          "brier_score_mean": 0.1253,
+          "brier_score_std": 0.0009
+        },
+        {
+          "model_name": "LogisticRegression",
+          "auc_roc_mean": 0.7119,
+          "auc_roc_std": 0.017,
+          "pr_auc_mean": 0.3645,
+          "pr_auc_std": 0.0393,
+          "f1_score_mean": 0.1134,
+          "f1_score_std": 0.034,
+          "precision_mean": 0.61,
+          "precision_std": 0.2332,
+          "recall_mean": 0.0641,
+          "recall_std": 0.02,
+          "balanced_accuracy_mean": 0.5264,
+          "balanced_accuracy_std": 0.0095,
+          "log_loss_mean": 0.4124,
+          "log_loss_std": 0.0105,
+          "brier_score_mean": 0.1254,
+          "brier_score_std": 0.0029
+        },
+        {
+          "model_name": "SVM",
+          "auc_roc_mean": 0.7113,
+          "auc_roc_std": 0.0214,
+          "pr_auc_mean": 0.3549,
+          "pr_auc_std": 0.0404,
+          "f1_score_mean": 0.0,
+          "f1_score_std": 0.0,
+          "precision_mean": 0.0,
+          "precision_std": 0.0,
+          "recall_mean": 0.0,
+          "recall_std": 0.0,
+          "balanced_accuracy_mean": 0.5,
+          "balanced_accuracy_std": 0.0,
+          "log_loss_mean": 0.4204,
+          "log_loss_std": 0.0103,
+          "brier_score_mean": 0.1287,
+          "brier_score_std": 0.0033
+        }
+      ],
+      "selection_policy": {
+        "policy_name": "ROC-AUC Primary with Brier Calibration & Parsimony Tie-Breaker",
+        "primary_metric": "auc_roc_mean",
+        "secondary_metric": "brier_score_mean",
+        "parsimony_rule": "Select candidate with highest mean CV ROC-AUC; prefer simpler architecture within 0.005 ROC-AUC margin."
+      },
+      "winning_model_name": "XGBoost",
+      "winning_cv_metrics": {
+        "model_name": "XGBoost",
+        "auc_roc_mean": 0.7672,
+        "auc_roc_std": 0.0163,
+        "pr_auc_mean": 0.3681,
+        "pr_auc_std": 0.0338,
+        "f1_score_mean": 0.0973,
+        "f1_score_std": 0.0331,
+        "precision_mean": 0.3407,
+        "precision_std": 0.0561,
+        "recall_mean": 0.0582,
+        "recall_std": 0.0227,
+        "balanced_accuracy_mean": 0.5177,
+        "balanced_accuracy_std": 0.0079,
+        "log_loss_mean": 0.3782,
+        "log_loss_std": 0.008,
+        "brier_score_mean": 0.1175,
+        "brier_score_std": 0.0031
+      },
+      "calibration_results": {
+        "uncalibrated_brier": 0.1165,
+        "sigmoid_brier": 0.106,
+        "isotonic_brier": 0.1072,
+        "selected_calibration": "PLATT_SIGMOID",
+        "training_brier_improvement_pct": 9.01
+      },
+      "final_test_metrics": {
+        "accuracy": 0.834,
+        "precision": 0.4444,
+        "recall": 0.0488,
+        "f1_score": 0.0879,
+        "balanced_accuracy": 0.5184,
+        "true_negatives": 413,
+        "false_positives": 5,
+        "false_negatives": 78,
+        "true_positives": 4,
+        "confusion_matrix": {
+          "tn": 413,
+          "fp": 5,
+          "fn": 78,
+          "tp": 4
+        },
+        "auc_roc": 0.7917,
+        "pr_auc": 0.3974,
+        "brier_score": 0.1163,
+        "log_loss": 0.3738,
+        "calibration_curve": {
+          "prob_true": [
+            0.0667,
+            0.3468,
+            0.5172,
+            0.5
+          ],
+          "prob_pred": [
+            0.0836,
+            0.3109,
+            0.4647,
+            0.6744
+          ]
+        },
+        "baseline_accuracy": 0.836,
+        "lift_over_baseline_pct": 0.0
+      },
+      "confusion_matrix": {
+        "tn": 413,
+        "fp": 5,
+        "fn": 78,
+        "tp": 4
+      },
+      "test_calibration_curve": {
+        "prob_true": [
+          0.0667,
+          0.3468,
+          0.5172,
+          0.5
+        ],
+        "prob_pred": [
+          0.0836,
+          0.3109,
+          0.4647,
+          0.6744
+        ]
+      },
+      "started_at": "2026-09-06T10:13:56.979441+00:00",
+      "completed_at": "2026-09-06T10:14:34.813078+00:00"
+    }
+  ]
+}
