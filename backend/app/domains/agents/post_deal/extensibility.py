@@ -35,6 +35,7 @@ from app.domains.telemetry.models import (
     BusinessExpense,
     BusinessOpportunity,
     BusinessRevenueEvent,
+    BusinessTelemetryChange,
     ExternalConnection,
     SyncRun,
 )
@@ -762,12 +763,32 @@ class OperationsIntelligenceAgent(BasePostDealAgent):
         blockers_res = await self.session.execute(blockers_q)
         blockers = list(blockers_res.scalars().all())
 
-        if not metrics and not blockers:
+        # Query Continuous External Telemetry (Connections, Expenses, Drift)
+        conn_q = select(ExternalConnection).where(
+            ExternalConnection.deal_id == deal_id,
+            ExternalConnection.organization_id == org_id,
+        )
+        connections = list((await self.session.execute(conn_q)).scalars().all())
+
+        telem_exp_q = select(BusinessExpense).where(
+            BusinessExpense.deal_id == deal_id,
+            BusinessExpense.organization_id == org_id,
+        )
+        telem_expenses = list((await self.session.execute(telem_exp_q)).scalars().all())
+
+        changes_q = select(BusinessTelemetryChange).where(
+            BusinessTelemetryChange.deal_id == deal_id,
+            BusinessTelemetryChange.organization_id == org_id,
+            BusinessTelemetryChange.is_resolved == False,
+        )
+        changes = list((await self.session.execute(changes_q)).scalars().all())
+
+        if not metrics and not blockers and not connections and not telem_expenses:
             return BaseAgentAssessment(
                 agent_id=self.agent_id,
                 domain="POST_DEAL_OPERATIONS",
                 status=AgentStatus.INSUFFICIENT_EVIDENCE,
-                summary="Insufficient operational telemetry or SLA performance logs.",
+                summary="Insufficient operational telemetry, connection feeds, or SLA performance logs.",
                 confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
                 confidence_score=0.20,
                 unresolved_issues=["No operational SLA or throughput telemetry recorded."],
@@ -782,6 +803,10 @@ class OperationsIntelligenceAgent(BasePostDealAgent):
         positive_drivers = []
         negative_drivers = []
 
+        if connections:
+            active_conns = [c for c in connections if c.connection_status in ("ACTIVE", "CONNECTED")]
+            positive_drivers.append(f"{len(active_conns)} of {len(connections)} operational telemetry system(s) active.")
+
         if not breaches and not critical_blockers:
             positive_drivers.append("All monitored operational SLAs are within target parameters.")
         else:
@@ -790,24 +815,54 @@ class OperationsIntelligenceAgent(BasePostDealAgent):
             if critical_blockers:
                 negative_drivers.append(f"{len(critical_blockers)} critical integration blocker(s) impacting operations.")
 
+        if changes:
+            negative_drivers.append(f"{len(changes)} unresolved operational metric drift event(s) detected in continuous telemetry.")
+
+        infra_expenses = [e for e in telem_expenses if str(e.category).upper() in ("CLOUD", "COGS")]
+        total_infra_spend = sum(float(getattr(e, "amount_usd", 0.0) or 0.0) for e in infra_expenses)
+
+        citations = []
+        if connections:
+            citations.append(
+                CitationRef(
+                    document_id=connections[0].id,
+                    document_name=f"Operational Telemetry Connection ({connections[0].provider})",
+                    page_number=1,
+                    exact_quote=f"Operational system connection status: {connections[0].connection_status}. Freshness: {connections[0].data_freshness_status}.",
+                )
+            )
+        elif telem_expenses:
+            citations.append(
+                CitationRef(
+                    document_id=telem_expenses[0].id,
+                    document_name=f"Operational Cost Telemetry ({telem_expenses[0].provider})",
+                    page_number=1,
+                    exact_quote=f"Ingested {len(telem_expenses)} expense line item(s) totaling ${sum(float(getattr(e, 'amount_usd', 0.0) or 0.0) for e in telem_expenses):,.0f}.",
+                )
+            )
+
         findings = [
             GroundedFinding(
                 domain_pillar="OPERATIONAL",
                 category="SLA_PERFORMANCE",
                 headline="Operational SLA & Process Health",
-                detailed_reasoning=f"Evaluated {len(metrics)} operational metrics with {len(breaches)} critical breaches and {len(blockers)} open blockers.",
+                detailed_reasoning=(
+                    f"Evaluated {len(metrics)} operational metrics with {len(breaches)} critical breaches, "
+                    f"{len(blockers)} open blockers, and {len(connections)} active external system connections."
+                ),
                 finding_type="FACT",
-                severity_level="LOW" if not breaches else "HIGH",
+                severity_level="LOW" if not breaches and not critical_blockers else "HIGH",
                 confidence_score=0.90,
                 is_deterministic_calculation=True,
                 calculation_source_engine="app.domains.post_deal.kpi_engine",
-                citations=[],
+                citations=citations,
             )
         ]
 
         summary = (
             f"Operations Intelligence: {len(metrics)} KPIs monitored. "
-            f"Breaches: {len(breaches)}, Deviations: {len(deviations)}, Open Blockers: {len(blockers)}."
+            f"Breaches: {len(breaches)}, Deviations: {len(deviations)}, Open Blockers: {len(blockers)}, "
+            f"Active Telemetry Systems: {len(connections)}."
         )
 
         return BaseAgentAssessment(
@@ -825,10 +880,14 @@ class OperationsIntelligenceAgent(BasePostDealAgent):
                 "critical_breaches_count": len(breaches),
                 "deviations_count": len(deviations),
                 "open_blockers_count": len(blockers),
+                "active_connections_count": len(connections),
+                "operational_infra_spend_usd": total_infra_spend,
+                "unresolved_drift_events_count": len(changes),
             },
             deterministic_references={
                 "critical_breaches_count": len(breaches),
                 "open_blockers_count": len(blockers),
+                "active_connections_count": len(connections),
             },
         )
 
@@ -1043,12 +1102,31 @@ class CorporateStrategyAgent(BasePostDealAgent):
         init_res = await self.session.execute(init_q)
         initiatives = list(init_res.scalars().all())
 
-        if not theses and not initiatives:
+        # Query Continuous Telemetry Drift & Financial Actuals
+        telem_changes_q = select(BusinessTelemetryChange).where(
+            BusinessTelemetryChange.deal_id == deal_id,
+            BusinessTelemetryChange.organization_id == org_id,
+        )
+        telem_changes = list((await self.session.execute(telem_changes_q)).scalars().all())
+
+        telem_rev_q = select(BusinessRevenueEvent).where(
+            BusinessRevenueEvent.deal_id == deal_id,
+            BusinessRevenueEvent.organization_id == org_id,
+        )
+        telem_revs = list((await self.session.execute(telem_rev_q)).scalars().all())
+
+        telem_cust_q = select(BusinessCustomer).where(
+            BusinessCustomer.deal_id == deal_id,
+            BusinessCustomer.organization_id == org_id,
+        )
+        telem_custs = list((await self.session.execute(telem_cust_q)).scalars().all())
+
+        if not theses and not initiatives and not telem_changes and not telem_revs and not telem_custs:
             return BaseAgentAssessment(
                 agent_id=self.agent_id,
                 domain="POST_DEAL_STRATEGY",
                 status=AgentStatus.INSUFFICIENT_EVIDENCE,
-                summary="Insufficient acquisition thesis tracking data or strategic value creation programs.",
+                summary="Insufficient acquisition thesis tracking data, strategic programs, or business telemetry actuals.",
                 confidence=AgentConfidence.INSUFFICIENT_EVIDENCE,
                 confidence_score=0.20,
                 unresolved_issues=["No acquisition thesis targets or strategic initiatives logged."],
@@ -1066,6 +1144,8 @@ class CorporateStrategyAgent(BasePostDealAgent):
             overall_status = ThesisStatus.AT_RISK.value
         elif on_track:
             overall_status = ThesisStatus.ON_TRACK.value
+        elif telem_revs or telem_custs:
+            overall_status = ThesisStatus.ON_TRACK.value
         else:
             overall_status = ThesisStatus.INSUFFICIENT_DATA.value
 
@@ -1079,24 +1159,70 @@ class CorporateStrategyAgent(BasePostDealAgent):
         for t in off_track:
             negative_drivers.append(f"Thesis Pillar '{t.thesis_pillar}' is OFF TRACK ({t.target_metric}).")
 
+        # Integrate telemetry drift against strategic thesis
+        drift_in_pillars = [c for c in telem_changes if c.affected_thesis_pillar]
+        for c in drift_in_pillars:
+            negative_drivers.append(
+                f"Telemetry drift detected in thesis pillar '{c.affected_thesis_pillar}': {c.metric_name} shifted {c.delta_percentage:+.1f}%."
+            )
+
+        total_actual_revenue = sum(float(getattr(r, "amount_usd", 0.0) or 0.0) for r in telem_revs)
+        total_pipeline_arr = sum(float(getattr(c, "arr_usd", 0.0) or 0.0) for c in telem_custs)
+
+        citations = []
+        if telem_changes:
+            ref_change = telem_changes[0]
+            citations.append(
+                CitationRef(
+                    document_id=ref_change.id,
+                    document_name="Continuous Telemetry Drift Stream",
+                    page_number=1,
+                    exact_quote=f"Identified {len(telem_changes)} telemetry variance events evaluated against core investment thesis.",
+                )
+            )
+        elif telem_revs:
+            ref_rev = telem_revs[0]
+            citations.append(
+                CitationRef(
+                    document_id=ref_rev.id,
+                    document_name=f"External ERP Revenue Telemetry ({ref_rev.provider})",
+                    page_number=1,
+                    exact_quote=f"Realized ${total_actual_revenue:,.0f} revenue actuals across {len(telem_revs)} synchronized transactions.",
+                )
+            )
+        elif telem_custs:
+            ref_c = telem_custs[0]
+            citations.append(
+                CitationRef(
+                    document_id=ref_c.id,
+                    document_name=f"External CRM Telemetry ({ref_c.provider})",
+                    page_number=1,
+                    exact_quote=f"Total monitored ARR of ${total_pipeline_arr:,.0f} across {len(telem_custs)} customer accounts.",
+                )
+            )
+
         findings = [
             GroundedFinding(
                 domain_pillar="OPERATIONAL",
                 category="ACQUISITION_THESIS",
                 headline="Acquisition Thesis Realization Status",
-                detailed_reasoning=f"Thesis status: {overall_status}. On Track: {len(on_track)}, At Risk: {len(at_risk)}, Off Track: {len(off_track)} across {len(theses)} pillars.",
+                detailed_reasoning=(
+                    f"Thesis status: {overall_status}. On Track: {len(on_track)}, At Risk: {len(at_risk)}, "
+                    f"Off Track: {len(off_track)} across {len(theses)} pillars with {len(telem_changes)} continuous telemetry drift events."
+                ),
                 finding_type="FACT",
                 severity_level="LOW" if overall_status == "ON_TRACK" else "HIGH",
                 confidence_score=0.93,
                 is_deterministic_calculation=True,
                 calculation_source_engine="app.domains.post_deal.kpi_engine",
-                citations=[],
+                citations=citations,
             )
         ]
 
         summary = (
             f"Corporate Strategy: Overall Acquisition Thesis is {overall_status}. "
-            f"Pillars on track: {len(on_track)}/{len(theses)}. Value creation programs: {len(initiatives)}."
+            f"Pillars on track: {len(on_track)}/{len(theses)}. Value creation programs: {len(initiatives)}. "
+            f"Monitored Telemetry Drift Events: {len(telem_changes)}."
         )
 
         return BaseAgentAssessment(
@@ -1116,10 +1242,14 @@ class CorporateStrategyAgent(BasePostDealAgent):
                 "at_risk_count": len(at_risk),
                 "off_track_count": len(off_track),
                 "initiatives_count": len(initiatives),
+                "telemetry_drift_events_count": len(telem_changes),
+                "telemetry_revenue_actuals_usd": total_actual_revenue,
+                "telemetry_pipeline_arr_usd": total_pipeline_arr,
             },
             deterministic_references={
                 "overall_thesis_status": overall_status,
                 "on_track_count": len(on_track),
+                "telemetry_drift_events_count": len(telem_changes),
             },
         )
 
@@ -1323,6 +1453,7 @@ class MarketingIntelligenceAgent(BasePostDealAgent):
         self.verify_tool("customer_cohort_tool")
         tools_invoked.append("customer_cohort_tool")
 
+        # Query legacy / internal CustomerAccount
         cust_q = select(CustomerAccount).where(
             CustomerAccount.deal_id == deal_id,
             CustomerAccount.organization_id == org_id,
@@ -1330,7 +1461,22 @@ class MarketingIntelligenceAgent(BasePostDealAgent):
         cust_res = await self.session.execute(cust_q)
         accounts = list(cust_res.scalars().all())
 
-        if not accounts:
+        # Query Canonical External Customer Telemetry (Salesforce & QBO)
+        telem_cust_q = select(BusinessCustomer).where(
+            BusinessCustomer.deal_id == deal_id,
+            BusinessCustomer.organization_id == org_id,
+        )
+        telem_customers = list((await self.session.execute(telem_cust_q)).scalars().all())
+
+        # Query External Sales & Marketing Expenses (QuickBooks)
+        telem_exp_q = select(BusinessExpense).where(
+            BusinessExpense.deal_id == deal_id,
+            BusinessExpense.organization_id == org_id,
+            BusinessExpense.category == "S&M",
+        )
+        sm_expenses = list((await self.session.execute(telem_exp_q)).scalars().all())
+
+        if not accounts and not telem_customers and not sm_expenses:
             return BaseAgentAssessment(
                 agent_id=self.agent_id,
                 domain="POST_DEAL_MARKETING",
@@ -1343,21 +1489,63 @@ class MarketingIntelligenceAgent(BasePostDealAgent):
                 required_diligence=["Ingest marketing attribution and acquisition spend data."],
             )
 
-        total_arr = sum(a.arr for a in accounts)
-        avg_arr = total_arr / len(accounts) if accounts else 0.0
+        # Reconcile customer counts and ARR
+        if accounts:
+            total_accounts = len(accounts)
+            total_arr = sum(a.arr for a in accounts)
+        else:
+            total_accounts = len(telem_customers)
+            total_arr = sum(float(getattr(c, "arr_usd", 0.0) or 0.0) for c in telem_customers)
+
+        avg_arr = total_arr / total_accounts if total_accounts else 0.0
+        total_sm_spend = sum(float(getattr(e, "amount_usd", 0.0) or 0.0) for e in sm_expenses)
+        cac_estimate = (total_sm_spend / total_accounts) if total_accounts > 0 and total_sm_spend > 0 else 0.0
+
+        positive_drivers = []
+        negative_drivers = []
+
+        if avg_arr > 0:
+            positive_drivers.append(f"Average contract value of ${avg_arr:,.0f} supported by live customer account telemetry.")
+        if total_sm_spend > 0:
+            positive_drivers.append(f"Synchronized ${total_sm_spend:,.0f} in S&M operational expenditure for CAC analysis.")
+
+        citations = []
+        if telem_customers:
+            ref_c = telem_customers[0]
+            citations.append(
+                CitationRef(
+                    document_id=ref_c.id,
+                    document_name=f"External CRM Telemetry ({ref_c.provider})",
+                    page_number=1,
+                    exact_quote=f"Live customer portfolio: {len(telem_customers)} accounts tracked with pipeline ARR of ${total_arr:,.0f}.",
+                )
+            )
+        if sm_expenses:
+            ref_e = sm_expenses[0]
+            citations.append(
+                CitationRef(
+                    document_id=ref_e.id,
+                    document_name=f"External S&M Expense Telemetry ({ref_e.provider})",
+                    page_number=1,
+                    exact_quote=f"Ingested {len(sm_expenses)} Sales & Marketing expense line item(s) totaling ${total_sm_spend:,.0f}.",
+                )
+            )
 
         findings = [
             GroundedFinding(
                 domain_pillar="CUSTOMER",
                 category="CAC_LTV_EFFICIENCY",
                 headline="Customer Acquisition & Marketing Efficiency",
-                detailed_reasoning=f"Analyzed {len(accounts)} accounts with average ACV of ${avg_arr:,.0f}.",
+                detailed_reasoning=(
+                    f"Analyzed {total_accounts} accounts with average ACV of ${avg_arr:,.0f} "
+                    f"and total S&M spend of ${total_sm_spend:,.0f}."
+                ),
                 finding_type="FACT",
                 severity_level="LOW",
                 confidence_score=0.85,
                 is_deterministic_calculation=True,
                 calculation_source_engine="app.domains.post_deal.kpi_engine",
-                citations=[],
+                citations=citations,
             )
         ]
 
@@ -1365,13 +1553,21 @@ class MarketingIntelligenceAgent(BasePostDealAgent):
             agent_id=self.agent_id,
             domain="POST_DEAL_MARKETING",
             status=AgentStatus.SUCCESS,
-            summary=f"Marketing Intelligence: {len(accounts)} accounts tracked with average ACV of ${avg_arr:,.0f}.",
+            summary=f"Marketing Intelligence: {total_accounts} accounts tracked with average ACV of ${avg_arr:,.0f}, S&M spend of ${total_sm_spend:,.0f}.",
             confidence=AgentConfidence.HIGH,
             confidence_score=0.85,
             key_findings=findings,
+            positive_drivers=positive_drivers,
+            negative_drivers=negative_drivers,
             metrics={
-                "total_accounts": len(accounts),
+                "total_accounts": total_accounts,
                 "average_acv": avg_arr,
+                "marketing_spend_usd": total_sm_spend,
+                "cac_usd": round(cac_estimate, 2),
+                "telemetry_customers_count": len(telem_customers),
             },
-            deterministic_references={"average_acv": avg_arr},
+            deterministic_references={
+                "average_acv": avg_arr,
+                "marketing_spend_usd": total_sm_spend,
+            },
         )

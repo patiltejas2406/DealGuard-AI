@@ -12,8 +12,12 @@ from app.domains.agents.post_deal.extensibility import (
     GrowthIntelligenceAgent,
     RevenueOptimizationAgent,
     CustomerRetentionAgent,
+    CostOptimizationAgent,
+    OperationsIntelligenceAgent,
     FPandAAgent,
+    CorporateStrategyAgent,
     PerformanceMonitoringAgent,
+    MarketingIntelligenceAgent,
 )
 from app.domains.auth.models import Organization, Role, User, OrganizationMembership
 from app.domains.deals.models import Deal, TargetCompany
@@ -318,6 +322,60 @@ async def test_specialist_agents_with_canonical_telemetry(db_session: AsyncSessi
     assert mon_res.status == AgentStatus.SUCCESS
     assert mon_res.metrics["active_connections_count"] == 2
     assert mon_res.metrics["recent_sync_runs_count"] == 2
+
+    # 6. Cost Optimization Agent
+    cost_agent = CostOptimizationAgent(db_session)
+    cost_req = AgentExecutionRequest(
+        agent_id=AgentId.COST_OPT,
+        deal_id=deal.id,
+        organization_id=org.id,
+        user_id=user.id,
+    )
+    cost_res = await cost_agent.execute(cost_req)
+    assert cost_res.status == AgentStatus.SUCCESS
+    assert len(cost_res.key_findings[0].citations) >= 1
+    assert "QuickBooks" in cost_res.key_findings[0].citations[0].document_name
+
+    # 7. Operations Intelligence Agent
+    ops_agent = OperationsIntelligenceAgent(db_session)
+    ops_req = AgentExecutionRequest(
+        agent_id=AgentId.OPERATIONS,
+        deal_id=deal.id,
+        organization_id=org.id,
+        user_id=user.id,
+    )
+    ops_res = await ops_agent.execute(ops_req)
+    assert ops_res.status == AgentStatus.SUCCESS
+    assert ops_res.metrics["active_connections_count"] == 2
+    assert len(ops_res.key_findings[0].citations) >= 1
+    assert "Operational Telemetry Connection" in ops_res.key_findings[0].citations[0].document_name
+
+    # 8. Corporate Strategy Agent
+    strat_agent = CorporateStrategyAgent(db_session)
+    strat_req = AgentExecutionRequest(
+        agent_id=AgentId.STRATEGY,
+        deal_id=deal.id,
+        organization_id=org.id,
+        user_id=user.id,
+    )
+    strat_res = await strat_agent.execute(strat_req)
+    assert strat_res.status == AgentStatus.SUCCESS, strat_res.summary
+    assert strat_res.metrics["telemetry_revenue_actuals_usd"] == 2110000.0
+    assert len(strat_res.key_findings[0].citations) >= 1
+
+    # 9. Marketing Intelligence Agent
+    mkt_agent = MarketingIntelligenceAgent(db_session)
+    mkt_req = AgentExecutionRequest(
+        agent_id=AgentId.MARKETING,
+        deal_id=deal.id,
+        organization_id=org.id,
+        user_id=user.id,
+    )
+    mkt_res = await mkt_agent.execute(mkt_req)
+    assert mkt_res.status == AgentStatus.SUCCESS
+    assert mkt_res.metrics["total_accounts"] == 6
+    assert mkt_res.metrics["marketing_spend_usd"] > 0
+    assert len(mkt_res.key_findings[0].citations) >= 1
 
 
 @pytest.mark.asyncio

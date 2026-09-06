@@ -153,6 +153,10 @@ class BusinessCustomer(TenantScopedModel):
     provenance_metadata: Mapped[Optional[dict]] = mapped_column(CompatibleJSON, default=dict, nullable=True)
     synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
+    @property
+    def provider(self) -> str:
+        return self.source_provider
+
     __table_args__ = (
         UniqueConstraint("deal_id", "source_provider", "external_id", name="uq_business_cust_deal_ext"),
         Index("ix_biz_cust_deal_health", "deal_id", "health_status"),
@@ -181,6 +185,10 @@ class BusinessOpportunity(TenantScopedModel):
     provenance_metadata: Mapped[Optional[dict]] = mapped_column(CompatibleJSON, default=dict, nullable=True)
     synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
+    @property
+    def provider(self) -> str:
+        return self.source_provider
+
     __table_args__ = (
         UniqueConstraint("deal_id", "source_provider", "external_id", name="uq_biz_opp_deal_ext"),
         Index("ix_biz_opp_deal_stage", "deal_id", "stage"),
@@ -206,6 +214,10 @@ class BusinessRevenueEvent(TenantScopedModel):
     provenance_metadata: Mapped[Optional[dict]] = mapped_column(CompatibleJSON, default=dict, nullable=True)
     synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
+    @property
+    def provider(self) -> str:
+        return self.source_provider
+
     __table_args__ = (
         UniqueConstraint("deal_id", "source_provider", "external_id", name="uq_biz_rev_deal_ext"),
         Index("ix_biz_rev_deal_period", "deal_id", "fiscal_period"),
@@ -228,6 +240,10 @@ class BusinessExpense(TenantScopedModel):
     amount_usd: Mapped[float] = mapped_column(Float, nullable=False)
     provenance_metadata: Mapped[Optional[dict]] = mapped_column(CompatibleJSON, default=dict, nullable=True)
     synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    @property
+    def provider(self) -> str:
+        return self.source_provider
 
     __table_args__ = (
         UniqueConstraint("deal_id", "source_provider", "external_id", name="uq_biz_exp_deal_ext"),
